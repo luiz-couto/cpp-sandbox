@@ -171,7 +171,36 @@ void validateNameAndAge() {
     std::cout << "Your name is " << name << " and you are " << age << " years old";
 }
 
+void simpleQuiz() {
+    int score = 0;
+
+    std::string firstQuestion = "Input any one of the following which is a capital city of a country:\n1. London\n2. Paris\n3. New York\n4. Coventry";
+    std::cout << firstQuestion << std::endl;
+    
+    int firstAnswer;
+    std::cin >> firstAnswer;
+
+    if (firstAnswer == 1 || firstAnswer == 2) {
+        score++;
+    }
+
+    std::string secondQuestion = "Name two countries which are in the EU:\n1. Norway\n2. Sweden\n3. Denwark\n4. France";
+    std::cout << secondQuestion << std::endl;
+    
+    int secondAnswer1;
+    std::cin >> secondAnswer1;
+
+    int secondAnswer2;
+    std::cin >> secondAnswer2;
+
+    if (!(secondAnswer1 == 1 || secondAnswer2 == 1)) {
+        score++;
+    }
+
+    std::cout << "Score: " << score << std::endl;
+}
+
 int main() {
-    validateNameAndAge();
+    simpleQuiz();
     return 0;
 }
