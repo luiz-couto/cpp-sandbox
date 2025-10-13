@@ -200,7 +200,15 @@ void simpleQuiz() {
     std::cout << "Score: " << score << std::endl;
 }
 
+void powerFromZeroToTwentyFive() {
+    for(int i=0; i<=25; i++) {
+        int square = i*i;
+        int fourthPower = square * square;
+        std::cout << "Square of " << i << ": " << square << " | 4th power: " << fourthPower << std::endl;
+    }
+}
+
 int main() {
-    simpleQuiz();
+    powerFromZeroToTwentyFive();
     return 0;
 }
