@@ -97,7 +97,17 @@ void convertFarenheitToCelsius() {
     std::cout << "The temperature in Celsius is " << celsius << std::endl;
 }
 
+void convertPoundstToKilograms() {
+    float pounds;
+
+    std::cout << "Pounds input: ";
+    std::cin >> pounds;
+
+    float kilograms = pounds / 2.205;
+    std::cout << "The weight in Kilograms is " << kilograms << std::endl;
+}
+
 int main() {
-    convertFarenheitToCelsius();
+    convertPoundstToKilograms();
     return 0;
 }
