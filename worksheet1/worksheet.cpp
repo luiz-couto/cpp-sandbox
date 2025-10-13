@@ -229,7 +229,24 @@ void validateNameAndAgeAskAgain() {
     std::cout << "Your name is " << name << " and you are " << age << " years old";
 }
 
+#define ARR_SIZE 10
+
+void randomIntegersArray() {
+    int integers[ARR_SIZE] = {};
+    for (int i=0; i<ARR_SIZE; i++) {
+        srand (time(0) + i * 10);
+        int number = (rand() % 999);
+        integers[i] = number;
+    }
+
+    for (int i=0; i<ARR_SIZE; i++) {
+        std::cout << integers[i] << "\t";
+    }
+
+    std::cout << std::endl;
+}
+
 int main() {
-    validateNameAndAgeAskAgain();
+    randomIntegersArray();
     return 0;
 }
