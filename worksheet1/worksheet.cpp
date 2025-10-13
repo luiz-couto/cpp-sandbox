@@ -152,7 +152,26 @@ void numberOfSevenDiceRolls() {
     std::cout << "Number of 7 rolls: " << count;
 }
 
+void validateNameAndAge() {
+    std::string name;
+    int age;
+
+    std::cout << "Name: ";
+    std::cin >> name;
+
+    std::cout << "Age: ";
+    std::cin >> age;
+
+    bool isAgeValid = age >= 2 && age <= 150;
+    if (!isAgeValid) {
+        std::cout << "Invalid age!" << std::endl;
+        return;
+    }
+
+    std::cout << "Your name is " << name << " and you are " << age << " years old";
+}
+
 int main() {
-    numberOfSevenDiceRolls();
+    validateNameAndAge();
     return 0;
 }
