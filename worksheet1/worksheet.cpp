@@ -208,7 +208,28 @@ void powerFromZeroToTwentyFive() {
     }
 }
 
+void validateNameAndAgeAskAgain() {
+    std::string name;
+    int age;
+
+    std::cout << "Name: ";
+    std::cin >> name;
+
+    while(true) {
+        std::cout << "Age: ";
+        std::cin >> age;
+
+        bool isAgeValid = age >= 2 && age <= 150;
+        if (isAgeValid) {
+            break;
+        }
+        std::cout << "Invalid age!" << std::endl;
+    }
+
+    std::cout << "Your name is " << name << " and you are " << age << " years old";
+}
+
 int main() {
-    powerFromZeroToTwentyFive();
+    validateNameAndAgeAskAgain();
     return 0;
 }
