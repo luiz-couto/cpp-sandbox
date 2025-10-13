@@ -1,4 +1,5 @@
 #include <iostream>
+#include <time.h>
 
 void helloWorld() {
     std::cout << "Hello World!" << std::endl;
@@ -107,7 +108,15 @@ void convertPoundstToKilograms() {
     std::cout << "The weight in Kilograms is " << kilograms << std::endl;
 }
 
+void diceRoll() {
+    srand (time(NULL));
+    int random = rand();
+    std::cout << random << std::endl;
+    int roll = (random % 6) + 1;
+    std::cout << "The dice roll was " << roll << std::endl;
+}
+
 int main() {
-    convertPoundstToKilograms();
+    diceRoll();
     return 0;
 }
