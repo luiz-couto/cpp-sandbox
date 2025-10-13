@@ -86,7 +86,18 @@ void stringOperations() {
     stringOperationPrintResult("The concatenation is ", sum);
 }
 
+void convertFarenheitToCelsius() {
+    float farenheit;
+
+    std::cout << "Farenheit input: ";
+    std::cin >> farenheit;
+
+    float celsius = (farenheit - 32) / 1.8;
+
+    std::cout << "The temperature in Celsius is " << celsius << std::endl;
+}
+
 int main() {
-    floatOperations();
+    convertFarenheitToCelsius();
     return 0;
 }
