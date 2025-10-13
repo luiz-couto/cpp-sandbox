@@ -111,12 +111,24 @@ void convertPoundstToKilograms() {
 void diceRoll() {
     srand (time(NULL));
     int random = rand();
-    std::cout << random << std::endl;
     int roll = (random % 6) + 1;
     std::cout << "The dice roll was " << roll << std::endl;
 }
 
+void diceRollMultipleFaces() {
+    int numberOfFaces;
+
+    std::cout << "Number of faces: "; 
+    std::cin >> numberOfFaces;
+
+    srand (time(NULL));
+    int random = rand();
+    int roll = (random % numberOfFaces) + 1;
+
+    std::cout << "The dice roll was " << roll << std::endl;
+}
+
 int main() {
-    diceRoll();
+    diceRollMultipleFaces();
     return 0;
 }
