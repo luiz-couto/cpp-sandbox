@@ -128,7 +128,31 @@ void diceRollMultipleFaces() {
     std::cout << "The dice roll was " << roll << std::endl;
 }
 
+int uniqueDiceRoll() {
+    srand (time(NULL));
+
+    int random = rand();
+    int roll = (random % 6) + 1;
+    return roll;
+}
+
+void numberOfSevenDiceRolls() {
+    int numberOfRounds = 10;
+    int count = 0;
+
+    for (int i=0; i<10; i++) {
+        int firstRoll = uniqueDiceRoll();
+        int secondRoll = uniqueDiceRoll();
+        std::cout << firstRoll << " " << secondRoll << std::endl;
+        if (firstRoll + secondRoll == 7) {
+            count++;
+        }
+    }
+
+    std::cout << "Number of 7 rolls: " << count;
+}
+
 int main() {
-    diceRollMultipleFaces();
+    numberOfSevenDiceRolls();
     return 0;
 }
