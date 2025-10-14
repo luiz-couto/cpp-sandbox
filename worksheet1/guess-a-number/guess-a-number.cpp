@@ -9,26 +9,35 @@ int generateRandomNumber() {
     return random % MAX_NUMBER;
 }
 
+int getComputerGuess(int min, int max) {
+    return (min + max) / 2;
+}
+
 int main() {
     int randomNumber = generateRandomNumber();
     std::cout << "Guess the number: ";
     
-    int userInput;
+    int max = MAX_NUMBER;
+    int min = 0;
+
+    int computerGuess = getComputerGuess(min, max);
     int numberOfTries = 1;
 
     while(true) {
-        std::cin >> userInput;
-        if (userInput == randomNumber) {
+        std::cout << "Computer guess: " << std::to_string(computerGuess) << std::endl;
+        if (computerGuess == randomNumber) {
             break;
         }
-
-        std::string tip = " Go up!";
-        if (userInput > randomNumber) {
-            tip = " Go down!";
+       
+        if (computerGuess > randomNumber) {
+            max = computerGuess;
+        } else {
+            min = computerGuess;
         }
 
-        std::cout << "Incorrect!" << tip << " Guess again: ";
+        std::cout << "Incorrect!" << std::endl;
         numberOfTries++;
+        computerGuess = getComputerGuess(min, max);
     }
 
     std::cout << "Correct!" << " Number of tries: " << std::to_string(numberOfTries) << std::endl;
