@@ -14,6 +14,7 @@ int main() {
     std::cout << "Guess the number: ";
     
     int userInput;
+    int numberOfTries = 1;
 
     while(true) {
         std::cin >> userInput;
@@ -21,8 +22,9 @@ int main() {
             break;
         }
         std::cout << "Incorrect! Guess again: ";
+        numberOfTries++;
     }
 
-    std::cout << "Correct!" << std::endl;
+    std::cout << "Correct!" << " Number of tries: " << std::to_string(numberOfTries) << std::endl;
     return 0;
 }
