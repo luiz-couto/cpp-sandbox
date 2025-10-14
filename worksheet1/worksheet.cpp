@@ -247,7 +247,7 @@ void randomIntegersArray() {
     std::cout << std::endl;
 }
 
-std::string getMonthString(int monthNum) {
+std::string getMonthStringSwitch(int monthNum) {
     switch (monthNum) {
         case 1:
             return "January";
@@ -278,6 +278,11 @@ std::string getMonthString(int monthNum) {
     }
 }
 
+std::string getMonthStringArray(int monthNum) {
+    std::string months[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+    return (monthNum >= 1 && monthNum <= 12) ? months[monthNum - 1] : "Try Again";
+}
+
 void formatDate() {
     int day,month;
     std::string monthString;
@@ -293,7 +298,8 @@ void formatDate() {
         std::cout << "Enter month: ";
         std::cin >> month;
 
-        monthString = getMonthString(month);
+        //monthString = getMonthStringSwitch(month);
+        monthString = getMonthStringArray(month);
         if (monthString != "Try Again") {
             break;
         }
