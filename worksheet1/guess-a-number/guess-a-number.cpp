@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define MAX_NUMBER 10
+#define MAX_NUMBER 1000
 
 int generateRandomNumber() {
     srand (time(NULL));
@@ -21,7 +21,13 @@ int main() {
         if (userInput == randomNumber) {
             break;
         }
-        std::cout << "Incorrect! Guess again: ";
+
+        std::string tip = " Go up!";
+        if (userInput > randomNumber) {
+            tip = " Go down!";
+        }
+
+        std::cout << "Incorrect!" << tip << " Guess again: ";
         numberOfTries++;
     }
 
