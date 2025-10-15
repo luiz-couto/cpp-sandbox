@@ -31,7 +31,36 @@ void checkEvenOrOddForArray() {
     }
 }
 
+int* generateRandomArray(int size) {
+    int* arr = new int[size];
+    for (int i=0; i<size; i++) {
+        arr[i] = generateRandomNumber();
+    }
+    return arr;
+}
+
+void displayArray(int arr[], int size) {
+    for (int i=0; i<size; i++) {
+        std::cout << arr[i] << "\t";
+    }
+    std::cout << std::endl;
+}
+
+int* reverseIntegerArray(int arr[], int size) {
+    int* reversedArr = new int[size];
+    for (int i=0; i<size; i++) {
+        reversedArr[i] = arr[size-i-1];
+    }
+    return reversedArr;
+}
+
 int main() {
-    checkEvenOrOddForArray();
+    int size = 10;
+    int* randomArr = generateRandomArray(size);
+    displayArray(randomArr, size);
+
+    int* reversedArr = reverseIntegerArray(randomArr, size);
+    displayArray(reversedArr, size);
+
     return 0;
 }
