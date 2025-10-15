@@ -54,12 +54,61 @@ int* reverseIntegerArray(int arr[], int size) {
     return reversedArr;
 }
 
+int findMaxArray(int arr[], int size) {
+    int max = arr[0];
+    for (int i=0; i<size; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+        }
+    }
+    return max;
+}
+
+int* findMaxArrayAndIndex(int arr[], int size) {
+    int max = arr[0];
+    int index = 0;
+
+    for (int i=0; i<size; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+            index = i;
+        }
+    }
+
+    int* result = new int[2];
+    result[0] = index;
+    result[1] = max;
+    return result;
+}
+
+void sortArray(int arr[], int size) {
+    int dinamycSize = size;
+    for (int i=0; i<size; i++) {
+        int* idxAndMaxValue = findMaxArrayAndIndex(arr, dinamycSize);
+        int maxIdx = idxAndMaxValue[0];
+        int maxValue = idxAndMaxValue[1];
+
+        arr[maxIdx] = arr[dinamycSize-1];
+        arr[dinamycSize-1] = maxValue;
+        dinamycSize--;
+    }
+}
+
 int main() {
     int size = 10;
     int* randomArr = generateRandomArray(size);
     displayArray(randomArr, size);
 
     int* reversedArr = reverseIntegerArray(randomArr, size);
+    displayArray(reversedArr, size);
+
+    int max = findMaxArray(reversedArr, size);
+    std::cout << max << std::endl;
+
+    int* idxAndMaxValue = findMaxArrayAndIndex(reversedArr, size);
+    std::cout << idxAndMaxValue[0] << ", " << idxAndMaxValue[1] << std::endl;
+
+    sortArray(reversedArr, size);
     displayArray(reversedArr, size);
 
     return 0;
