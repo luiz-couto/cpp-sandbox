@@ -39,7 +39,8 @@ int* generateRandomArray(int size) {
     return arr;
 }
 
-void displayArray(int arr[], int size) {
+void displayArray(int arr[], int size, std::string message) {
+    std::cout << message << ": ";
     for (int i=0; i<size; i++) {
         std::cout << arr[i] << "\t";
     }
@@ -81,15 +82,19 @@ int* findMaxArrayAndIndex(int arr[], int size) {
     return result;
 }
 
+void shuffleArray(int arr[], int size) {
+    for (int i=0; i<size; i++) {
+        int randomIdx = generateRandomNumber() % size;
+        std::swap(arr[i], arr[randomIdx]);
+    }
+}
+
 void sortArray(int arr[], int size) {
     int dinamycSize = size;
     for (int i=0; i<size; i++) {
         int* idxAndMaxValue = findMaxArrayAndIndex(arr, dinamycSize);
         int maxIdx = idxAndMaxValue[0];
-        int maxValue = idxAndMaxValue[1];
-
-        arr[maxIdx] = arr[dinamycSize-1];
-        arr[dinamycSize-1] = maxValue;
+        std::swap(arr[maxIdx], arr[dinamycSize-1]);
         dinamycSize--;
     }
 }
@@ -97,19 +102,22 @@ void sortArray(int arr[], int size) {
 int main() {
     int size = 10;
     int* randomArr = generateRandomArray(size);
-    displayArray(randomArr, size);
+    displayArray(randomArr, size, "Random Arr");
 
     int* reversedArr = reverseIntegerArray(randomArr, size);
-    displayArray(reversedArr, size);
+    displayArray(reversedArr, size, "Reversed");
 
     int max = findMaxArray(reversedArr, size);
-    std::cout << max << std::endl;
+    std::cout << "Max Value: " << max << std::endl;
 
     int* idxAndMaxValue = findMaxArrayAndIndex(reversedArr, size);
-    std::cout << idxAndMaxValue[0] << ", " << idxAndMaxValue[1] << std::endl;
+    std::cout << "Max Idx and Value: " << idxAndMaxValue[0] << ", " << idxAndMaxValue[1] << std::endl;
 
     sortArray(reversedArr, size);
-    displayArray(reversedArr, size);
+    displayArray(reversedArr, size, "Sorted");
+
+    shuffleArray(reversedArr, size);
+    displayArray(reversedArr, size, "Shuffled");
 
     return 0;
 }
