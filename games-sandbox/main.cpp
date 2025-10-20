@@ -22,17 +22,31 @@ int main() {
     GamesEngineeringBase::Image* image = new GamesEngineeringBase::Image();
     image->load("assets/L.png");
 
+    int positionX = WINDOW_WIDTH / 2;
+    int positionY = WINDOW_HEIGHT / 2;
+
     while (running)
     {
     // Check for input (key presses or window events)
-
+    if (canvas.keyPressed('W')) {
+        positionY = max(positionY - 1, 0);
+    }
+    if (canvas.keyPressed('A')) {
+        positionX = max(positionX - 1, 0);
+    }
+    if (canvas.keyPressed('D')) {
+        positionX = max(positionX + 1, WINDOW_WIDTH - image->width);
+    }
+    if (canvas.keyPressed('S')) {
+       positionY = max(positionY + 1, WINDOW_HEIGHT - image->height);
+    }
 
     // Clear the window for the next frame rendering
     canvas.clear();
 
     // Update game logic
     // Draw();
-    drawImage(&canvas, image, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
+    drawImage(&canvas, image, positionX, positionY);
 
     // Display the frame on the screen. This must be called once the frame
     //is finished in order to display the frame.
