@@ -35,10 +35,10 @@ int main() {
         positionX = max(positionX - 1, 0);
     }
     if (canvas.keyPressed('D')) {
-        positionX = max(positionX + 1, WINDOW_WIDTH - image->width);
+        positionX = min(positionX + 1, WINDOW_WIDTH - image->width);
     }
     if (canvas.keyPressed('S')) {
-       positionY = max(positionY + 1, WINDOW_HEIGHT - image->height);
+       positionY = min(positionY + 1, WINDOW_HEIGHT - image->height);
     }
 
     // Clear the window for the next frame rendering
