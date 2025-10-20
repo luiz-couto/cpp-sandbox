@@ -13,6 +13,15 @@ void drawImage(GamesEngineeringBase::Window* canvas, GamesEngineeringBase::Image
     }
 }
 
+void renderBackground(GamesEngineeringBase::Window *canvas) {
+    unsigned char backgroundColorPixel[3] = {100, 125, 255};
+    for (int i=0; i<WINDOW_WIDTH; i++) {
+        for (int j=0; j<WINDOW_HEIGHT; j++) {
+            canvas->draw(i, j, backgroundColorPixel);
+        }
+    }
+}
+
 int main() {
     // Create a canvas window with dimensions 1024x768 and title “Tiles"
     GamesEngineeringBase::Window canvas;
@@ -25,20 +34,22 @@ int main() {
     int positionX = WINDOW_WIDTH / 2;
     int positionY = WINDOW_HEIGHT / 2;
 
+    int velocity = 3;
+
     while (running)
     {
     // Check for input (key presses or window events)
     if (canvas.keyPressed('W')) {
-        positionY = max(positionY - 1, 0);
+        positionY = max(positionY - velocity, 0);
     }
     if (canvas.keyPressed('A')) {
-        positionX = max(positionX - 1, 0);
+        positionX = max(positionX - velocity, 0);
     }
     if (canvas.keyPressed('D')) {
-        positionX = min(positionX + 1, WINDOW_WIDTH - image->width);
+        positionX = min(positionX + velocity, WINDOW_WIDTH - image->width);
     }
     if (canvas.keyPressed('S')) {
-       positionY = min(positionY + 1, WINDOW_HEIGHT - image->height);
+       positionY = min(positionY + velocity, WINDOW_HEIGHT - image->height);
     }
 
     // Clear the window for the next frame rendering
@@ -46,6 +57,7 @@ int main() {
 
     // Update game logic
     // Draw();
+    renderBackground(&canvas);
     drawImage(&canvas, image, positionX, positionY);
 
     // Display the frame on the screen. This must be called once the frame
