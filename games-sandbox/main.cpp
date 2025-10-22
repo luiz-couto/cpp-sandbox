@@ -27,7 +27,7 @@ int main() {
     while (running)
     {
         // Check for input (key presses or window events)
-        plane->move();
+        plane->reactToMovementKeys();
 
         // Clear the window for the next frame rendering
         canvas.clear();

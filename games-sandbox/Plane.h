@@ -31,7 +31,7 @@ class Plane {
         }
     }
 
-    void move() {
+    void reactToMovementKeys() {
         if (this->canvas->keyPressed('W')) {
             this->y = max(this->y - VELOCITY, 0);
         }
