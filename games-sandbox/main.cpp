@@ -1,5 +1,6 @@
 #include "GamesEngineeringBase.h"
 #include "Plane.h"
+#include "PlaneManager.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -19,15 +20,20 @@ int main() {
     canvas.create(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME);
     bool running = true;
     
+    GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
+
     int positionX = WINDOW_WIDTH / 2;
     int positionY = WINDOW_HEIGHT / 2;
     
-    Plane *plane = new Plane(positionX, positionY, &canvas, "assets/L.png");
-    
+    Plane *playerPlane = new Plane(positionX, positionY, &canvas, "assets/L.png");
+    PlaneManager *planesManager = new PlaneManager(&canvas, "assets/L2.png");
+
     while (running)
     {
         // Check for input (key presses or window events)
-        plane->reactToMovementKeys();
+        float dt = tim.dt();
+        playerPlane->reactToMovementKeys();
+        planesManager->update(dt);
 
         // Clear the window for the next frame rendering
         canvas.clear();
@@ -35,11 +41,13 @@ int main() {
         // Update game logic
         // Draw();
         renderBackground(&canvas);
-        plane->draw();
+        playerPlane->draw();
+        planesManager->draw();
 
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
         canvas.present();
+        //tim.reset();
     }
     return 0;
 }

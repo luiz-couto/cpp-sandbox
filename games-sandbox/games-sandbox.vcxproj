@@ -126,6 +126,7 @@
     <ClInclude Include="GameImage.h" />
     <ClInclude Include="GamesEngineeringBase.h" />
     <ClInclude Include="Plane.h" />
+    <ClInclude Include="PlaneManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
