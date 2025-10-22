@@ -23,7 +23,7 @@ class PlaneManager {
     Plane *player;
 
     int currentSize = 0;
-    float timeElapsed = 0;    
+    float timeElapsed = 0;  
 
     int x,y;
     float timeToNewPlane = 3.0f;
