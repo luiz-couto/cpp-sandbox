@@ -37,6 +37,16 @@ class Plane {
         this->y = this->y + y;
     }
 
+    bool checkColision(Plane *anotherPlane) {
+        float radius = this->image->height / 2;
+        float distanceBetweenCenters = sqrt(pow(this->x - anotherPlane->x, 2) +  pow(this->y - anotherPlane->y, 2));
+        float distance = max(0, distanceBetweenCenters - 2 * radius);
+        if (distance == 0) {
+            return true;
+        }
+        return false;
+    }
+
     void reactToMovementKeys() {
         if (this->canvas->keyPressed('W')) {
             this->y = max(this->y - VELOCITY, 0);

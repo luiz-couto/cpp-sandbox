@@ -20,6 +20,8 @@ class PlaneManager {
     std::string planeImageFilename;
 
     Plane *planes[MAX_MANAGER_SIZE];
+    Plane *player;
+
     int currentSize = 0;
     float timeElapsed = 0;    
 
@@ -27,8 +29,9 @@ class PlaneManager {
     float timeToNewPlane = 3.0f;
 
     public:
-    PlaneManager(GamesEngineeringBase::Window *canvas, std::string planeImageFilename) {
+    PlaneManager(GamesEngineeringBase::Window *canvas, Plane *player, std::string planeImageFilename) {
         this->canvas = canvas;
+        this->player = player;
         this->planeImageFilename = planeImageFilename;
         this->x = this->canvas->getWidth() / 2;
         this->y = -100;
@@ -52,6 +55,10 @@ class PlaneManager {
             //     this->planes[i] = nullptr;
             //     this->currentSize--;
             // }
+
+            if (this->player->checkColision(this->planes[i])) {
+                std::cout << "COLISION!" << std::endl;
+            }
         }
     }
 

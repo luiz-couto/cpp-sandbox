@@ -26,7 +26,7 @@ int main() {
     int positionY = WINDOW_HEIGHT / 2;
     
     Plane *playerPlane = new Plane(positionX, positionY, &canvas, "assets/L.png");
-    PlaneManager *planesManager = new PlaneManager(&canvas, "assets/L2.png");
+    PlaneManager *planesManager = new PlaneManager(&canvas, playerPlane, "assets/L2.png");
 
     while (running)
     {
