@@ -6,11 +6,11 @@
 
 class Plane {
     private:
-    int x,y;
     GamesEngineeringBase::Image *image;
     GamesEngineeringBase::Window *canvas;
-
+    
     public:
+    int x,y;
     Plane(int x, int y, GamesEngineeringBase::Window *canvas, std::string filename) {
         this->x = x;
         this->y = y;
@@ -25,10 +25,16 @@ class Plane {
         for (int i=0; i < image->width; i++) {
             for (int j=0; j < image->height; j++) {
                 if (image->alphaAt(i, j) > 0) {
-                    canvas->draw(i + this->x, j + this->y, image->at(i, j));
+                    if (j + this->y >= 0 && j + this->y < 768) {
+                        canvas->draw(i + this->x, j + this->y, image->at(i, j));
+                    }
                 }
             }
         }
+    }
+
+    void updateYPosition(int y) {
+        this->y = this->y + y;
     }
 
     void reactToMovementKeys() {
