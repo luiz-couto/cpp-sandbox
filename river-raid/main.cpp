@@ -1,6 +1,7 @@
 #include "GamesEngineeringBase.h"
 #include "Tile.h"
 #include "TileSet.h"
+#include "Plane.h"
 #include "World.h";
 
 #define WINDOW_WIDTH 1024
@@ -24,6 +25,11 @@ int main() {
     GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
     World *world = new World(&canvas);
 
+    int positionX = WINDOW_WIDTH / 2;
+    int positionY = 645;
+    
+    Plane *playerPlane = new Plane(positionX, positionY, &canvas, "assets/L.png");
+
     int worldIdx = 0;
 
     while (running)
@@ -38,6 +44,8 @@ int main() {
         if (canvas.keyPressed('S')) {
             worldIdx = worldIdx - 3;
         }
+        
+        playerPlane->reactToMovementKeys();
 
         // Clear the window for the next frame rendering
         canvas.clear();
@@ -46,6 +54,7 @@ int main() {
         // Draw();
         // renderBackground(&canvas);
         world->draw(worldIdx);
+        playerPlane->draw();
 
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
