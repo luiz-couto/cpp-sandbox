@@ -31,13 +31,11 @@ class World {
     }
 
     void draw(int idx) {
-        // int idxTop = tilesIdxArr[idx];
-        // int idxBottom = tilesIdxArr[idx+1];
-        // this->tileSet->get(idxTop)->draw(0);
-        
-        int offset = idx % this->canvas->getHeight() / 2;
-        this->tileSet->get(0)->draw(this->canvas->getHeight() / 2 + offset);
-        this->tileSet->get(1)->draw(offset);
-        this->tileSet->get(2)->draw(offset - (this->canvas->getHeight() / 2));
+        int offset = idx % 384;
+        int Y = idx / 384;
+
+        this->tileSet->get(this->tilesIdxArr[Y % WORLD_SIZE])->draw(this->canvas->getHeight() / 2 + offset);
+        this->tileSet->get(this->tilesIdxArr[(Y + 1) % WORLD_SIZE])->draw(offset);
+        this->tileSet->get(this->tilesIdxArr[(Y + 2) % WORLD_SIZE])->draw(offset - (this->canvas->getHeight() / 2));
     }
 };

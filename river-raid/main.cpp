@@ -30,8 +30,13 @@ int main() {
     {
         // Check for input (key presses or window events)
         float dt = tim.dt();
+
+        worldIdx = worldIdx + 4;
         if (canvas.keyPressed('W')) {
             worldIdx = worldIdx + 8;
+        }
+        if (canvas.keyPressed('S')) {
+            worldIdx = worldIdx - 3;
         }
 
         // Clear the window for the next frame rendering
