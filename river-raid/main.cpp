@@ -1,5 +1,6 @@
 #include "GamesEngineeringBase.h"
 #include "Tile.h"
+#include "TileSet.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -20,7 +21,7 @@ int main() {
     bool running = true;
     
     GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
-    Tile *tile = new Tile(&canvas, "assets/0.png", WINDOW_HEIGHT/2);
+    TileSet *tileset = new TileSet(&canvas);
 
     while (running)
     {
@@ -33,7 +34,8 @@ int main() {
         // Update game logic
         // Draw();
         renderBackground(&canvas);
-        tile->draw();
+        tileset->get(0)->draw(canvas.getHeight() / 2);
+        tileset->get(1)->draw(0);
 
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.

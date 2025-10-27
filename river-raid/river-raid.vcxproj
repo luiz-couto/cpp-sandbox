@@ -125,6 +125,7 @@
   <ItemGroup>
     <ClInclude Include="GamesEngineeringBase.h" />
     <ClInclude Include="Tile.h" />
+    <ClInclude Include="TileSet.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
