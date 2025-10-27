@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="GamesEngineeringBase.h" />
+    <ClInclude Include="Manager.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="TileSet.h" />
