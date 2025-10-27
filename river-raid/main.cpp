@@ -24,18 +24,23 @@ int main() {
     GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
     World *world = new World(&canvas);
 
+    int worldIdx = 0;
+
     while (running)
     {
         // Check for input (key presses or window events)
         float dt = tim.dt();
+        if (canvas.keyPressed('W')) {
+            worldIdx = worldIdx + 8;
+        }
 
         // Clear the window for the next frame rendering
         canvas.clear();
 
         // Update game logic
         // Draw();
-        renderBackground(&canvas);
-        world->draw(0);
+        // renderBackground(&canvas);
+        world->draw(worldIdx);
 
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
