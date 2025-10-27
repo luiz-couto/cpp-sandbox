@@ -18,24 +18,33 @@ class World {
     private:
     GamesEngineeringBase::Window *canvas;
     TileSet *tileSet;
+    TileSet *alphas;
     int tilesIdxArr[WORLD_SIZE];
-
+    
     public:
+    bool alphaOn = false;
     World(GamesEngineeringBase::Window *canvas) {
         this->canvas = canvas;
-        TileSet *tileset = new TileSet(canvas);
+        TileSet *tileset = new TileSet(canvas, false);
         this->tileSet = tileset;
         for (int i=0; i < WORLD_SIZE; i++) {
             this->tilesIdxArr[i] = generateRandomNumber() % 6;
         }
+
+        TileSet *alphas = new TileSet(canvas, true);
+        this->alphas = alphas;
     }
 
     void draw(int idx) {
         int offset = idx % 384;
         int Y = idx / 384;
 
-        this->tileSet->get(this->tilesIdxArr[Y % WORLD_SIZE])->draw(this->canvas->getHeight() / 2 + offset);
-        this->tileSet->get(this->tilesIdxArr[(Y + 1) % WORLD_SIZE])->draw(offset);
-        this->tileSet->get(this->tilesIdxArr[(Y + 2) % WORLD_SIZE])->draw(offset - (this->canvas->getHeight() / 2));
+        TileSet *selectedTiles = this->tileSet;
+        if (this->alphaOn) {
+            selectedTiles = this->alphas;
+        }
+        selectedTiles->get(this->tilesIdxArr[Y % WORLD_SIZE])->draw(this->canvas->getHeight() / 2 + offset);
+        selectedTiles->get(this->tilesIdxArr[(Y + 1) % WORLD_SIZE])->draw(offset);
+        selectedTiles->get(this->tilesIdxArr[(Y + 2) % WORLD_SIZE])->draw(offset - (this->canvas->getHeight() / 2));
     }
 };

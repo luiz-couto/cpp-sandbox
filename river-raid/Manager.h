@@ -31,6 +31,13 @@ class Manager {
         if (this->canvas->keyPressed('S')) {
             this->worldIdx = this->worldIdx - 3;
         }
+
+        if (this->canvas->keyPressed('M')) {
+            this->world->alphaOn = true;
+        }
+        if (this->canvas->keyPressed('N')) {
+            this->world->alphaOn = false;
+        }
         
         this->hero->reactToMovementKeys();
     }

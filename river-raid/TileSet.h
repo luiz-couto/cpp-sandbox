@@ -10,10 +10,15 @@ class TileSet {
     Tile *tiles[SIZE];
 
     public:
-    TileSet(GamesEngineeringBase::Window *canvas) {
+    TileSet(GamesEngineeringBase::Window *canvas, bool loadAlpha) {
         this->canvas = canvas;
+
+        std::string alphaPath = "alpha";
+        if (!loadAlpha) {
+            alphaPath = "";
+        }
         for (int i=0; i<SIZE; i++) {
-            this->tiles[i] = new Tile(this->canvas, "assets/" + std::to_string(i) + ".png");
+            this->tiles[i] = new Tile(this->canvas, "assets/" + alphaPath + std::to_string(i) + ".png");
         }
     }
 
