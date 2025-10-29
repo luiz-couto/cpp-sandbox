@@ -1,4 +1,10 @@
 #include <iostream>
+#include <concepts>
+
+template <typename T>
+concept Addable = requires(T a, T b) {
+    a + b;
+};
 
 class MyStruct {
     public:
