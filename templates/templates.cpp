@@ -80,6 +80,52 @@ class Stack {
     }
 };
 
+template <typename T, int SIZE = 10>
+class GrowableArray {
+    private:
+    T *arr;
+    int maxSize = SIZE;
+    int size = 0;
+
+    public:
+    GrowableArray() {
+        this->arr = new T[maxSize];
+    }
+
+    ~GrowableArray() {
+        delete[] arr;
+    }
+
+    void add(T item) {
+        if (size < maxSize) {
+			this->arr[size++] = item;
+            return;
+        }
+
+        T* newarray;
+        this->maxSize *= 2;
+        std::cout << "Growing array to " << maxSize << std::endl;
+
+        newarray = new T[maxSize]; // should check if there was enough space really
+        memcpy(newarray, this->arr, size * sizeof(T));
+        delete[] this->arr;
+        this->arr = newarray;
+        this->arr[size++] = item;
+    }
+    
+    void display() {
+		for (int i = 0; i < size; i++)
+			std::cout << this->arr[i] << '\t';
+		std::cout << std::endl;
+	}
+
+	T& operator[] (unsigned int index) {
+		// lazy implementation should test bounds really 
+		return this->arr[index];
+	}
+
+};
+
 int main() {
     MyStruct a;
     a.data = 2;
