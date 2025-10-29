@@ -19,6 +19,48 @@ class Mage : public Hero {
     }
 };
 
+class Node {
+    public:
+    std::shared_ptr<Node> next;
+    int data;
+    Node(int data) {
+        this->data = data;
+    }
+};
+
+class Stack {
+    private:
+    std::shared_ptr<Node> top;
+
+    public:
+    Stack() {
+        this->top = nullptr;
+    }
+
+    void push(int data) {
+        std::shared_ptr<Node> newNode = std::make_shared<Node>(Node(data));
+        newNode->next = this->top;
+        this->top = newNode;
+    }
+    
+    bool pop(int *data) {
+        if (this->top == nullptr) return false; 
+        
+        std::shared_ptr<Node> n = this->top;
+        *data = n->data;
+        this->top = n->next;
+
+        return true;
+    }
+
+    void display() {
+        for (std::shared_ptr<Node> n = top; n != nullptr; n = n->next) {
+            std::cout << n->data << "\t";
+        }
+        std::cout << std::endl;
+    }
+};
+
 
 int main() {
     std::unique_ptr<Hero> hero;
