@@ -67,6 +67,12 @@ class World {
         this->alphas = alphas;
     }
 
+    ~World() {
+        delete this->tileSet;
+        delete this->alphas;
+        delete[] this->tilesIdxArr;
+    }
+
     void collision(int idx, int yHero) {
         int tileHeight = 384;
         int Y = idx / 384;
