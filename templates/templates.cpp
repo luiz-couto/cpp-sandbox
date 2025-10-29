@@ -1,8 +1,16 @@
 #include <iostream>
 
-struct MyStruct {
+class MyStruct {
+    public:
     int data;
+
+    friend std::ostream& operator << (std::ostream& stream, const MyStruct& a);
 };
+
+std::ostream& operator << (std::ostream& stream, const MyStruct& a) {
+    stream << a.data;
+    return stream;
+}
 
 template <typename T>
 void swp(T &a, T &b) {
@@ -103,6 +111,13 @@ int main() {
     strStack.push("C++ Templates!");
     strStack.pop(&strPoped);
     strStack.display();
+
+    Stack<MyStruct> structStack;
+    MyStruct structPoped;
+    structStack.pop(&structPoped);
+    structStack.push(a);
+    structStack.push(b);
+    structStack.display();
 
     return 0;
 }
