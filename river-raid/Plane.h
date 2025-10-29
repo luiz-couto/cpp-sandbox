@@ -10,6 +10,7 @@ class Plane {
     GamesEngineeringBase::Window *canvas;
     
     public:
+    int yCollide;
     int x,y;
     Plane(int x, int y, GamesEngineeringBase::Window *canvas, std::string filename) {
         this->x = x;
@@ -19,6 +20,8 @@ class Plane {
 
         this->image = new GamesEngineeringBase::Image();
         this->image->load(filename);
+
+        this->yCollide = (this->image->height / 3) * 2;
     }
 
     void draw() {
@@ -26,9 +29,19 @@ class Plane {
             for (int j=0; j < image->height; j++) {
                 if (image->alphaAt(i, j) > 0) {
                     if (j + this->y >= 0 && j + this->y < 768) {
-                        canvas->draw(i + this->x, j + this->y, image->at(i, j));
+                        this->canvas->draw(i + this->x, j + this->y, image->at(i, j));
                     }
                 }
+            }
+        }
+    }
+
+    void drawCollisionLine() {
+        int centerY = this->y + this->yCollide;
+        int lineThickness = 1;
+        for (int t=0; t < lineThickness; t++) {
+            for (int i=0; i < this->image->width; i++) {
+                this->canvas->draw(i + this->x, centerY + t, 0, 255, 0);
             }
         }
     }

@@ -4,9 +4,9 @@
 class Tile {
     private:
     GamesEngineeringBase::Window *canvas;
-    GamesEngineeringBase::Image *tileImage;
-
+    
     public:
+    GamesEngineeringBase::Image *tileImage;
     Tile(GamesEngineeringBase::Window *canvas, std::string filename) {
         this->canvas = canvas;
         GamesEngineeringBase::Image *tileImage = new GamesEngineeringBase::Image();

@@ -45,6 +45,8 @@ class Manager {
     void draw() {
         this->world->draw(this->worldIdx);
         this->hero->draw();
+        this->world->collision(this->worldIdx, this->hero->yCollide);
+        this->hero->drawCollisionLine();
     }
 
 };
