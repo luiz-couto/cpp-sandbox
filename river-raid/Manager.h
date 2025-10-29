@@ -20,7 +20,8 @@ class Manager {
         int positionY = 645;
         this->hero = new Plane(positionX, positionY, this->canvas, "assets/L.png");
 
-        this->world = new World(canvas);
+        //this->world = new World(canvas);
+        this->world = new World(canvas, "assets/worlds/0.world");
     }
 
     void update() {

@@ -1,9 +1,11 @@
 #pragma once
+#include <fstream>
+#include <sstream>
 #include <iostream>
 #include <random>
 #include "TileSet.h"
 
-#define WORLD_SIZE 10000
+#define DEFAULT_WORLD_SIZE 10000
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
 
@@ -20,7 +22,8 @@ class World {
     GamesEngineeringBase::Window *canvas;
     TileSet *tileSet;
     TileSet *alphas;
-    int tilesIdxArr[WORLD_SIZE];
+    int *tilesIdxArr;
+    int worldSize = DEFAULT_WORLD_SIZE;
     
     public:
     bool alphaOn = false;
@@ -28,8 +31,36 @@ class World {
         this->canvas = canvas;
         TileSet *tileset = new TileSet(canvas, false);
         this->tileSet = tileset;
-        for (int i=0; i < WORLD_SIZE; i++) {
+
+        this->tilesIdxArr = new int[this->worldSize];
+        for (int i=0; i < this->worldSize; i++) {
             this->tilesIdxArr[i] = generateRandomNumber() % 6;
+        }
+
+        TileSet *alphas = new TileSet(canvas, true);
+        this->alphas = alphas;
+    }
+
+    World(GamesEngineeringBase::Window *canvas, std::string worldFile) {
+        this->canvas = canvas;
+        TileSet *tileset = new TileSet(canvas, false);
+        this->tileSet = tileset;
+        
+        int size;
+        std::ifstream infile(worldFile);
+        std::string line;
+
+        std::getline(infile, line);
+        std::istringstream stringStream(line);
+
+        stringStream >> size;
+        this->worldSize = size;
+        this->tilesIdxArr = new int[this->worldSize];
+
+        for (int i=0; i<this->worldSize; i++) {
+            std::getline(infile, line);
+            std::istringstream stringStream(line);
+            stringStream >> this->tilesIdxArr[i];
         }
 
         TileSet *alphas = new TileSet(canvas, true);
@@ -41,7 +72,7 @@ class World {
         int Y = idx / 384;
         int offset = idx % 384;
         int lineYPos = (tileHeight * 2) - yHero / 2;
-        int tileIdx = this->tilesIdxArr[(Y) % WORLD_SIZE];
+        int tileIdx = this->tilesIdxArr[(Y) % this->worldSize];
 
         unsigned int yCoord = tileHeight - ((yHero + idx) % tileHeight);
 
@@ -65,9 +96,9 @@ class World {
         if (this->alphaOn) {
             selectedTiles = this->alphas;
         }
-        selectedTiles->get(this->tilesIdxArr[Y % WORLD_SIZE])->draw(this->canvas->getHeight() / 2 + offset);
-        selectedTiles->get(this->tilesIdxArr[(Y + 1) % WORLD_SIZE])->draw(offset);
-        selectedTiles->get(this->tilesIdxArr[(Y + 2) % WORLD_SIZE])->draw(offset - (this->canvas->getHeight() / 2));
+        selectedTiles->get(this->tilesIdxArr[Y % this->worldSize])->draw(this->canvas->getHeight() / 2 + offset);
+        selectedTiles->get(this->tilesIdxArr[(Y + 1) % this->worldSize])->draw(offset);
+        selectedTiles->get(this->tilesIdxArr[(Y + 2) % this->worldSize])->draw(offset - (this->canvas->getHeight() / 2));
 
         //this->collision(Y, offset);
     }
