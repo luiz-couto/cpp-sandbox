@@ -11,4 +11,15 @@ int main() {
     for (float n : vec) {
         std::print("{} - ", n);
     }
+
+    std::print("{}", vec);
+
+    for (auto i = vec.begin(); i < vec.end(); i++) {
+        std::print("{} - ", *i);
+    }
+
+    std::println("");
+    vec.erase(vec.begin() + 1);
+    std::print("{}", vec);
+    return 0;
 }
