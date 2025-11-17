@@ -526,6 +526,7 @@ class Quaternion {
 
     Quaternion() : a(0), b(0), c(0), d(1) {}
     Quaternion(float a, float b, float c, float d) : a(a), b(b), c(c), d(d) {}
+    
     float magnitude() {
         return sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d));
     }
