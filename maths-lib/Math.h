@@ -361,4 +361,91 @@ class Matrix {
             }
         }
     }
+
+    Vec4 mul(const Vec4& v) {
+        return Vec4(
+            v.x * m[0] + v.y * m[1] + v.z * m[2] + v.w * m[3],
+            v.x * m[4] + v.y * m[5] + v.z * m[6] + v.w * m[7],
+            v.x * m[8] + v.y * m[9] + v.z * m[10] + v.w * m[11],
+            v.x * m[12] + v.y * m[13] + v.z * m[14] + v.w * m[15]
+        );
+    }
+
+    Vec3 mulPoint(const Vec3& v) {
+        Vec3 v1 = Vec3(
+            (v.x * m[0] + v.y * m[1] + v.z * m[2]) + m[3],
+            (v.x * m[4] + v.y * m[5] + v.z * m[6]) + m[7],
+            (v.x * m[8] + v.y * m[9] + v.z * m[10]) + m[11]
+        );
+        return v1;
+    }
+
+    void setRotationX(float angle) {
+        setIdentity();
+        float cos = std::cos(angle);
+        float sin = std::sin(angle);
+        m[5] = cos;
+        m[6] = -sin;
+        m[9] = sin;
+        m[10] = cos;
+    }
+
+    void setRotationY(float angle) {
+        setIdentity();
+        float cos = std::cos(angle);
+        float sin = std::sin(angle);
+        m[0] = cos;
+        m[2] = sin;
+        m[8] = -sin;
+        m[10] = cos;
+    }
+
+    void setRotationZ(float angle) {
+        setIdentity();
+        float cos = std::cos(angle);
+        float sin = std::sin(angle);
+        m[0] = cos;
+        m[1] = -sin;
+        m[4] = sin;
+        m[5] = cos;
+    }
+
+    void setTranslation(float tx, float ty, float tz) {
+        setIdentity();
+        m[3] = tx;
+        m[7] = ty;
+        m[11] = tz;
+    }
+
+    void setScallig(float sx, float sy, float sz) {
+        setIdentity();
+        m[0] = sx;
+        m[5] = sy;
+        m[10] = sz;
+    }
+
+    Vec3 rotateX(float angle, const Vec3& v) {
+        setRotationX(angle);
+        return mulPoint(v);
+    }
+
+    Vec3 rotateY(float angle, const Vec3& v) {
+        setRotationY(angle);
+        return mulPoint(v);
+    }
+
+    Vec3 rotateZ(float angle, const Vec3& v) {
+        setRotationZ(angle);
+        return mulPoint(v);
+    }
+
+    Vec3 translation(float tx, float ty, float tz, const Vec3& v) {
+        setTranslation(tx, ty, tz);
+        return mulPoint(v);
+    }
+
+    Vec3 scaling(float sx, float sy, float sz, const Vec3& v) {
+        setScallig(sx, sy, sz);
+        return mulPoint(v);
+    }
 };
