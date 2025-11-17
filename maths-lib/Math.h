@@ -134,7 +134,15 @@ class Vec3
         v[0] *= len; v[1] *= len; v[2] *= len;
         return length;
     }
+
+    float dot(const Vec3& pVec) const {
+        return v[0] * pVec.v[0] + v[1] * pVec.v[1] + v[2] * pVec.v[2];
+    }
 };
+
+float dot(const Vec3 &a, const Vec3 &b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
 
 template <>
 struct std::formatter<Vec3> : std::formatter<float> {
