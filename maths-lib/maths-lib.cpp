@@ -1,20 +1,20 @@
-// maths-lib.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include <print>
+#include "Math.h"
 
-int main()
-{
-    std::cout << "Hello World!\n";
+int main(){
+    Vec3 a(1.0f, 2.0f, 3.0f);
+    Vec3 b(4.0f, 5.0f, 6.0f);
+
+    Vec3 c = a + b;
+    Vec3 d = a * b;
+    Vec3 e = a + 10.0f;
+    Vec3 f = b * 2.0f;
+
+    std::println("{}", c);
+    std::println("{}", d);
+    std::println("{}", e);
+    std::println("{}", f);
+
+    return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file

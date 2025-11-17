@@ -1,6 +1,8 @@
 #pragma once
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <print>
+#include <format>
 
 #define SQ(x) ((x) * (x))
 
@@ -112,4 +114,30 @@ class Vec3
     Vec3 operator-() const {
         return Vec3(-v[0], -v[1], -v[2]);
     }
+
+    float length() const {
+        return std::sqrt(SQ(x) + SQ(y) + SQ(z));
+    }
+
+    float lengthSquared() const {
+        return SQ(x) + SQ(y) + SQ(z);
+    }
+
+    Vec3 normalize(void) {
+        float len = 1.0f / sqrtf(SQ(x) + SQ(y) + SQ(z)); 
+        return Vec3(x * len, y * len, z * len);
+    }
+
+    float normalize_GetLength() {
+        float length = sqrtf(SQ(x) + SQ(y) + SQ(z)); 
+        float len = 1.0f / length;
+        v[0] *= len; v[1] *= len; v[2] *= len;
+        return length;
+    }
 };
+
+template <>
+struct std::formatter<Vec3> : std::formatter<float> {
+auto format(const Vec3& v, auto& ctx) const {
+    return std::format_to(ctx.out(), "Vec3[{}, {}, {}]", v.x, v.y, v.z);
+}};
