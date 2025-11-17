@@ -341,3 +341,24 @@ struct std::formatter<Vec4> : std::formatter<float> {
 auto format(const Vec4& v, auto& ctx) const {
     return std::format_to(ctx.out(), "Vec4[{}, {}, {}, {}]", v.x, v.y, v.z, v.w);
 }};
+
+class Matrix {
+    public:
+    union
+    {
+        float a[4][4];
+        float m[16];
+    };
+
+    Matrix() {
+        setIdentity();
+    }
+
+    void setIdentity() {
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++) {
+                a[i][j] = (i == j) ? 1.0f : 0.0f;
+            }
+        }
+    }
+};
