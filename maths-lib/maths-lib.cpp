@@ -16,5 +16,14 @@ int main(){
     std::println("{}", e);
     std::println("{}", f);
 
+    Vec4 u(1.0f, 2.0f, 3.0f, 4.0f);
+    Vec4 v(5.0f, 6.0f, 7.0f, 8.0f);
+
+    Vec4 w = u + v;
+    Vec4 x = u * v;
+
+    std::println("{}", w);
+    std::println("{}", x);
+
     return 0;
 }
