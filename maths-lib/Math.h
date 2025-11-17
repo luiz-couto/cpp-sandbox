@@ -3,6 +3,7 @@
 #include <cmath>
 #include <print>
 #include <format>
+#include <algorithm>
 
 #define SQ(x) ((x) * (x))
 
@@ -135,14 +136,42 @@ class Vec3
         return length;
     }
 
-    float dot(const Vec3& pVec) const {
+    float dot(const Vec3 &pVec) const {
         return v[0] * pVec.v[0] + v[1] * pVec.v[1] + v[2] * pVec.v[2];
+    }
+
+    Vec3 cross(const Vec3 &v1) {
+        return Vec3(v1.v[1] * v[2] - v1.v[2] * v[1], v1.v[2] * v[0] - v1.v[0] * v[2], v1.v[0] * v[1] - v1.v[1] * v[0]);
+    }
+
+    float Max() const {
+        return std::max(std::max(x, y), z);
+    }
+
+    float Min() const {
+        return std::min(std::min(x, y), z);
     }
 };
 
 float dot(const Vec3 &a, const Vec3 &b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
-}
+};
+
+Vec3 Max(const Vec3 &v1, const Vec3 &v2) {
+    return Vec3(
+        std::max(v1.x, v2.x),
+        std::max(v1.y, v2.y),
+        std::max(v1.z, v2.z)
+    );
+};
+
+Vec3 Min(const Vec3 &v1, const Vec3 &v2) {
+    return Vec3(
+        std::min(v1.x, v2.x),
+        std::min(v1.y, v2.y),
+        std::min(v1.z, v2.z)
+    );
+};
 
 template <>
 struct std::formatter<Vec3> : std::formatter<float> {
