@@ -515,3 +515,39 @@ class Matrix {
         return inv;
     }
 };
+
+class Quaternion {
+    public:
+    union
+    {
+        float q[4];
+        struct { float a, b, c, d; };
+    };
+
+    Quaternion() : a(0), b(0), c(0), d(1) {}
+    Quaternion(float a, float b, float c, float d) : a(a), b(b), c(c), d(d) {}
+    float magnitude() {
+        return sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d));
+    }
+
+    Matrix toMatrix() {
+        float aa = a * a, ab = a * b, ac = a * c;
+        float bb = b * b, bc = b * c, cc = c * c;
+        float da = d * a, db = d * b, dc = d * c;
+        Matrix m;
+        m[0] = 1 - 2 * (bb + cc);
+        m[1] = 2 * (ab - dc);
+        m[2] = 2 * (ac + db);
+        m[3] = 0; m[4] = 2 * (ab + dc);
+        m[5] = 1 - 2 * (aa + cc); 
+        m[6] = 2 * (bc - da); 
+        m[7] = 0; 
+        m[8] = 2 * (ac - db); 
+        m[9] = 2 * (bc + da);
+        m[10] = 1 - 2 * (aa + bb);
+        m[11] = 0;
+        m[12] = m[13] = m[14] = 0;
+        m[15] = 1;
+        return m;
+    }
+};
