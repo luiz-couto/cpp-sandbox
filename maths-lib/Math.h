@@ -716,3 +716,57 @@ class SphericalCoordY {
         );
     }
 };
+
+class Colour {
+    public:
+    union
+    {
+        float c[4];
+        struct { float r, g, b, a; };
+    };
+
+    Colour() : r(0), g(0), b(0), a(1) {}
+    Colour(float r, float g, float b, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
+    Colour(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255) : 
+        r(static_cast<float>(r) / 255.0f), 
+        g(static_cast<float>(g) / 255.0f), 
+        b(static_cast<float>(b) / 255.0f),
+        a(static_cast<float>(a) / 255.0f) {}
+
+    Colour operator+(const Colour &colour) const {
+        return Colour(
+            std::min(r + colour.r, 255.0f), 
+            std::min(g + colour.g, 255.0f), 
+            std::min(b + colour.b, 255.0f), 
+            std::min(a + colour.a, 1.0f)
+        );
+    }
+
+    Colour operator*(const Colour &colour) const {
+        return Colour(
+            std::min(r * colour.r, 255.0f), 
+            std::min(g * colour.g, 255.0f), 
+            std::min(b * colour.b, 255.0f), 
+            std::min(a * colour.a, 1.0f)
+        );
+    }
+
+    Colour operator*(const float a) const {
+        return Colour(
+            std::min(r * a, 255.0f), 
+            std::min(g * a, 255.0f), 
+            std::min(b * a, 255.0f), 
+            std::min(this->a * a, 1.0f)
+        );
+    }
+
+    Colour operator/(const float a) const {
+        return Colour(
+            std::min(r / a, 255.0f), 
+            std::min(g / a, 255.0f), 
+            std::min(b / a, 255.0f), 
+            std::min(this->a / a, 1.0f)
+        );
+    }
+
+};
