@@ -354,6 +354,12 @@ class Matrix {
         setIdentity();
     }
 
+    Matrix(float m[16]) {
+        for(int i = 0; i < 16; i++) {
+            this->m[i] = m[i];
+        }
+    }
+
     float& operator[](int index) {
         return m[index];
     }
@@ -526,9 +532,97 @@ class Quaternion {
 
     Quaternion() : a(0), b(0), c(0), d(1) {}
     Quaternion(float a, float b, float c, float d) : a(a), b(b), c(c), d(d) {}
+
+    Quaternion operator-() const {
+        return Quaternion(-a, -b, -c, -d);
+    }
     
-    float magnitude() {
+    float magnitude() const {
         return sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d));
+    }
+
+    Quaternion normalize() const {
+        float mag = magnitude();
+        if (mag == 0) {
+            // Handle zero magnitude case
+        }
+        return Quaternion(a / mag, b / mag, c / mag, d / mag);
+    }
+
+    Quaternion conjugate() {
+        return Quaternion(-a, -b, -c, d);
+    }
+
+    Quaternion inverse() {
+        float magSq = SQ(a) + SQ(b) + SQ(c) + SQ(d);
+        if (magSq == 0) {
+            // Handle zero magnitude case
+        }
+        Quaternion conj = conjugate();
+        return Quaternion(conj.a / magSq, conj.b / magSq, conj.c / magSq, conj.d / magSq);
+    }
+
+    Quaternion mul(const Quaternion& q2) const {
+        return Quaternion(
+            (d * q2.a) + (a * q2.d) + (b * q2.c) - (c * q2.b),
+            (d * q2.b) - (a * q2.c) + (b * q2.d) + (c * q2.a),
+            (d * q2.c) + (a * q2.b) - (b * q2.a) + (c * q2.d),
+            (d * q2.d) - (a * q2.a) - (b * q2.b) - (c * q2.c)
+        );
+    }
+
+    Quaternion fromAxisAngle(Vec3 &axis, float angle) {
+        Vec3 normAxis = axis.normalize();
+        float sinHalf = std::sin(angle * 0.5f);
+        float cosHalf = std::cos(angle * 0.5f);
+        return Quaternion(
+            normAxis.x * sinHalf,
+            normAxis.y * sinHalf,
+            normAxis.z * sinHalf,
+            cosHalf
+        );
+    }
+
+    float dot(const Quaternion& q2) const {
+        return (a * q2.a) + (b * q2.b) + (c * q2.c) + (d * q2.d);
+    }
+
+    Quaternion slerp(const Quaternion& q, float t) {
+        Quaternion q1 = this->normalize();
+        Quaternion q2 = q.normalize();
+
+        float dotProd = q1.dot(q2);
+
+        if (dotProd < 0.0f) {
+            q2 = -q2;
+            dotProd = -dotProd;
+        }
+
+        const float DOT_THRESHOLD = 0.9995f;
+        if (dotProd > DOT_THRESHOLD) {
+            Quaternion result = Quaternion(
+                lerp(q1.a, q2.a, t),
+                lerp(q1.b, q2.b, t),
+                lerp(q1.c, q2.c, t),
+                lerp(q1.d, q2.d, t)
+            );
+            return result.normalize();
+        }
+
+        float theta = std::acos(dotProd);
+        float sinTheta = std::sin(theta);
+
+        float thetaT = theta * t;
+        float sinThetaT = std::sin(thetaT);
+
+        float s0 = std::sin((1.0f - t) * theta) / sinTheta;
+        float s1 = sinThetaT / sinTheta;
+        return Quaternion(
+            (s0 * q1.a) + (s1 * q2.a),
+            (s0 * q1.b) + (s1 * q2.b),
+            (s0 * q1.c) + (s1 * q2.c),
+            (s0 * q1.d) + (s1 * q2.d)
+        );
     }
 
     Matrix toMatrix() {
