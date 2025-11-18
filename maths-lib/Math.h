@@ -646,3 +646,73 @@ class Quaternion {
         return m;
     }
 };
+
+class SphericalCoordZ {
+    public:
+    float radius;
+    float theta;
+    float phi;
+
+    SphericalCoordZ() : radius(1.0f), theta(0.0f), phi(0.0f) {}
+    SphericalCoordZ(float radius, float theta, float phi) : radius(radius), theta(theta), phi(phi) {}
+    SphericalCoordZ(const Vec3& v) {
+        radius = 1.0f;
+        theta = thetaFromCartesian(v);
+        phi = phiFromCartesian(v);
+    }
+
+    float thetaFromCartesian(const Vec3& v) const {
+        return std::acos(v.z / radius);
+    }
+
+    float phiFromCartesian(const Vec3& v) const {
+        return std::atan(v.y / v.x);
+    }
+
+    Vec3 toCartesian() const {
+        float sinTheta = std::sin(theta);
+        float cosTheta = std::cos(theta);
+        float sinPhi = std::sin(phi);
+        float cosPhi = std::cos(phi);
+        return Vec3(
+            radius * sinTheta * cosPhi,
+            radius * sinTheta * sinPhi,
+            radius * cosTheta
+        );
+    }
+};
+
+class SphericalCoordY {
+    public:
+    float radius;
+    float theta;
+    float phi;
+
+    SphericalCoordY() : radius(1.0f), theta(0.0f), phi(0.0f) {}
+    SphericalCoordY(float radius, float theta, float phi) : radius(radius), theta(theta), phi(phi) {}
+    SphericalCoordY(const Vec3& v) {
+        radius = 1.0f;
+        theta = thetaFromCartesian(v);
+        phi = phiFromCartesian(v);
+    }
+
+    float thetaFromCartesian(const Vec3& v) const {
+        return std::acos(v.y / radius);
+    }
+
+    float phiFromCartesian(const Vec3& v) const {
+        return std::atan(v.z / v.x);
+    }
+
+    Vec3 toCartesian() const {
+        float sinTheta = std::sin(theta);
+        float cosTheta = std::cos(theta);
+        float sinPhi = std::sin(phi);
+        float cosPhi = std::cos(phi);
+        return Vec3(
+            radius * sinTheta * cosPhi,
+            radius * cosTheta,
+            radius * sinTheta * sinPhi
+        );
+    }
+};
