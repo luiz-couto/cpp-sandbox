@@ -123,7 +123,7 @@ class Vec3 {
         return SQ(x) + SQ(y) + SQ(z);
     }
 
-    Vec3 normalize(void) {
+    Vec3 normalize(void) const {
         float len = 1.0f / sqrtf(SQ(x) + SQ(y) + SQ(z)); 
         return Vec3(x * len, y * len, z * len);
     }
@@ -519,6 +519,37 @@ class Matrix {
             inv.m[i] = inv.m[i] * det;
         }
         return inv;
+    }
+};
+
+class ShadingFrame {
+    public:
+    Vec3 tangent;
+    Vec3 bitangent;
+    Vec3 normal;
+
+    ShadingFrame() : tangent(1,0,0), bitangent(0,1,0), normal(0,0,1) {}
+    ShadingFrame(const Vec3 &normal) {
+        this->normal = normal.normalize();
+        build();
+    }
+
+    void build() {
+        Vec3 helper = (std::fabs(normal.x) > 0.99f) ? Vec3(0,1,0) : Vec3(1,0,0);
+        tangent = (helper - normal * helper.dot(normal)).normalize();
+        bitangent = normal.cross(tangent);
+    }
+
+    Vec3 worldToLocal(const Vec3& v) const {
+        return Vec3{
+            v.dot(tangent),
+            v.dot(bitangent),
+            v.dot(normal)
+        };
+    }
+
+    Vec3 localToWorld(const Vec3& v) const {
+        return tangent * v.x + bitangent * v.y + normal * v.z;
     }
 };
 
