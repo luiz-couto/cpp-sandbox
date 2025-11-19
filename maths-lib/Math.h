@@ -316,6 +316,10 @@ class Vec4 {
     float Min() const {
         return std::min(std::min(x, y), std::min(z, w));
     }
+
+    Vec4 divideByW() {
+        return Vec4( x / w, y / w, z / w, w / w);
+    }
 };
 
 Vec4 Max(const Vec4 &v1, const Vec4 &v2) {
@@ -520,6 +524,21 @@ class Matrix {
         }
         return inv;
     }
+
+
+    void setProjectionMatrix(float zFar, float zNear, float fovTheta, float width, float height) {
+        setIdentity();
+        float aspect = width / height;
+        float tanFOV = tan(fovTheta / 2);
+
+        m[0] = 1 / (aspect * tanFOV);
+        m[5] = 1 / tanFOV;
+        m[10] = zFar / (zFar - zNear);
+        m[11] = (- (zFar * zNear)) / (zFar - zNear);
+        m[14] = 1;
+        m[15] = 0;
+    }
+
 };
 
 class ShadingFrame {

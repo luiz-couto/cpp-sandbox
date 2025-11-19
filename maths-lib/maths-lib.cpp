@@ -34,22 +34,43 @@ T simpleInterpolateAttribute(T a0, T a1, T a2, float alpha, float beta, float ga
     return (a0 * alpha) + (a1 * beta) + (a2 * gamma);
 }
 
+Vec4 transformPointToScreenSpace(Vec4 &point) {
+    Matrix m;
+    float FOV = 45;
+    float zNear = 0.1;
+    float zFar = 1000;
+
+
+    m.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
+    Vec4 pc = m.mul(point);
+    Vec4 pLine = pc.divideByW();
+
+    float vx = ((pLine.x + 1) / 2) * WINDOW_WIDTH;
+    float vy = ((pLine.y + 1) / 2) * WINDOW_HEIGHT;
+
+    return Vec4(vx, vy, 0, 0);
+} 
+
 void draw(GamesEngineeringBase::Window &canvas, Triangle& triangle) {
     Vec4 tr, bl;
-    findBounds(triangle.v0, triangle.v1, triangle.v2, tr, bl);
+
+    Vec4 v0Projected = transformPointToScreenSpace(triangle.v0);
+    Vec4 v1Projected = transformPointToScreenSpace(triangle.v1);
+    Vec4 v2Projected = transformPointToScreenSpace(triangle.v2);
+
+    findBounds(v0Projected, v1Projected, v2Projected, tr, bl);
 
     for (int y = (int)bl.y; y < (int)tr.y + 1; y++) {
         for (int x = (int)bl.x; x < (int)tr.x + 1; x++) {
             Vec4 p(x + 0.5f, y + 0.5f, 0, 0);
             // Compute triangle here
-            Vec4 e0 = triangle.v1 - triangle.v0;
-            Vec4 e1 = triangle.v2 - triangle.v1;
-            Vec4 e2 = triangle.v0 - triangle.v2;
+            Vec4 e0 = v1Projected - v0Projected;
+            Vec4 e1 = v2Projected - v1Projected;
+            Vec4 e2 = v0Projected - v2Projected;
 
-            float alpha = edgeFunction(triangle.v1, triangle.v0, p);
-            float beta = edgeFunction(triangle.v2, triangle.v1, p);
-            float gamma = edgeFunction(triangle.v0, triangle.v2, p);
-
+            float alpha = edgeFunction(v1Projected, v0Projected, p);
+            float beta = edgeFunction(v2Projected, v1Projected, p);
+            float gamma = edgeFunction(v0Projected, v2Projected, p);
             float projArea = e0.x * e1.y - e0.y * e1.x;
             float area = 1.0f / projArea;
 
@@ -71,34 +92,31 @@ int main() {
     canvas.create(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME);
     bool running = true;
 
-    Triangle triangle(
-        Vec4(100.0f, 100.0f, 0.0f, 0.0f),
-        Vec4(400.0f, 300.0f, 0.0f, 0.0f),
-        Vec4(200.0f, 500.0f, 0.0f, 0.0f)
-    );
+    float z = -1.0f;
 
-    Triangle triangle2(
-        Vec4(600.0f, 100.0f, 0.0f, 0.0f),
-        Vec4(900.0f, 300.0f, 0.0f, 0.0f),
-        Vec4(700.0f, 500.0f, 0.0f, 0.0f)
-    );
+    
 
     while (running)
     {
         // Check for input (key presses or window events)
-
+        Triangle triangle(
+            Vec4(0.0f, 0.3f, z, 0.0f),
+            Vec4(-0.3f, -0.3f, z, 0.0f),
+            Vec4(0.3f, -0.3f, z, 0.0f)
+        );
 
         // Clear the window for the next frame rendering
         canvas.clear();
 
         // Update game logic
         draw(canvas, triangle);
-        draw(canvas, triangle2);
         
 
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
         canvas.present();
+
+        z += 0.001f;
     }
     return 0;
 }
