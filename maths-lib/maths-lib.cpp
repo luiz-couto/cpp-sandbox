@@ -55,12 +55,8 @@ T perspectiveCorrectInterpolateAttribute(
         return ((attrib[0] + attrib[1] + attrib[2]) / frag_w);
 }
 
-Vec4 transformPointToScreenSpace(Vec4 &point) {
+Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar) {
     Matrix m;
-    float FOV = 45;
-    float zNear = 0.1;
-    float zFar = 1000;
-
 
     m.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
     Vec4 pc = m.mul(point);
@@ -73,11 +69,15 @@ Vec4 transformPointToScreenSpace(Vec4 &point) {
 } 
 
 void draw(GamesEngineeringBase::Window &canvas, Triangle& triangle) {
+    float FOV = 45;
+    float zNear = 0.1;
+    float zFar  = 1000;
+
     Vec4 tr, bl;
 
-    Vec4 v0Projected = transformPointToScreenSpace(triangle.v0);
-    Vec4 v1Projected = transformPointToScreenSpace(triangle.v1);
-    Vec4 v2Projected = transformPointToScreenSpace(triangle.v2);
+    Vec4 v0Projected = transformPointToScreenSpace(triangle.v0, FOV, zNear, zFar);
+    Vec4 v1Projected = transformPointToScreenSpace(triangle.v1, FOV, zNear, zFar);
+    Vec4 v2Projected = transformPointToScreenSpace(triangle.v2, FOV, zNear, zFar);
 
     findBounds(v0Projected, v1Projected, v2Projected, tr, bl);
 
@@ -169,12 +169,8 @@ void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, fl
 }
 
 
-std::vector<Triangle> clipping(std::vector<Triangle> triangles) {
+std::vector<Triangle> clipping(std::vector<Triangle> triangles, float FOV, float zNear, float zFar) {
     Matrix m;
-    float FOV = 45;
-    float zNear = 0.1;
-    float zFar  = 1000;
-
     m.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     Vec4 P2 = Vec4(m[8],  m[9],  m[10], m[11]);
