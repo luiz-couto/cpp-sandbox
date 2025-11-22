@@ -194,6 +194,8 @@ void transformTrianglesToViewSpace(std::vector<Triangle*> &triangles) {
     }
 }
 
+static float zBuffer[WINDOW_WIDTH * WINDOW_HEIGHT];
+
 void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangles) {
     float FOV = 45;
     float zNear = 0.1;
@@ -202,6 +204,10 @@ void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangle
     transformTrianglesToViewSpace(triangles);
 
     std::vector<Triangle*> clippedTriangles = clipping(triangles, FOV, zNear, zFar);
+
+    for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++) {
+        zBuffer[i] = 1;
+    }
 
     for (Triangle *triangle : clippedTriangles) {
         Vec4 tr, bl;
@@ -229,16 +235,19 @@ void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangle
                 alpha *= area;
                 beta *= area;
                 gamma *= area;
+
+                float z = v0Projected.z * alpha + v1Projected.z * beta + v2Projected.z * gamma;
     
                 if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) {
-                    Colour frag = simpleInterpolateAttribute(Colour(1.0f, 0, 0), Colour(0, 1.0f, 0), Colour(0, 0, 1.0f),  alpha, beta, gamma);
-                    canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
+                    if (z < zBuffer[y * WINDOW_WIDTH + x]) {
+                        zBuffer[y * WINDOW_WIDTH + x] = z;
+                        Colour frag = simpleInterpolateAttribute(Colour(1.0f, 0, 0), Colour(0, 1.0f, 0), Colour(0, 0, 1.0f),  alpha, beta, gamma);
+                        canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
+                    }
                 }
-    
             }
         }
     }
-
 }
 
 int main() {
