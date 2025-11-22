@@ -68,44 +68,47 @@ Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar
     return Vec4(vx, vy, 0, 0);
 } 
 
-void draw(GamesEngineeringBase::Window &canvas, Triangle& triangle) {
+void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> triangles) {
     float FOV = 45;
     float zNear = 0.1;
     float zFar  = 1000;
 
-    Vec4 tr, bl;
-
-    Vec4 v0Projected = transformPointToScreenSpace(triangle.v0, FOV, zNear, zFar);
-    Vec4 v1Projected = transformPointToScreenSpace(triangle.v1, FOV, zNear, zFar);
-    Vec4 v2Projected = transformPointToScreenSpace(triangle.v2, FOV, zNear, zFar);
-
-    findBounds(v0Projected, v1Projected, v2Projected, tr, bl);
-
-    for (int y = (int)bl.y; y < (int)tr.y + 1; y++) {
-        for (int x = (int)bl.x; x < (int)tr.x + 1; x++) {
-            Vec4 p(x + 0.5f, y + 0.5f, 0, 0);
-            // Compute triangle here
-            Vec4 e0 = v1Projected - v0Projected;
-            Vec4 e1 = v2Projected - v1Projected;
-            Vec4 e2 = v0Projected - v2Projected;
-
-            float alpha = edgeFunction(v1Projected, v0Projected, p);
-            float beta = edgeFunction(v2Projected, v1Projected, p);
-            float gamma = edgeFunction(v0Projected, v2Projected, p);
-            float projArea = e0.x * e1.y - e0.y * e1.x;
-            float area = 1.0f / projArea;
-
-            alpha *= area;
-            beta *= area;
-            gamma *= area;
-
-            if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) {
-                Colour frag = simpleInterpolateAttribute(Colour(1.0f, 0, 0), Colour(0, 1.0f, 0), Colour(0, 0, 1.0f),  alpha, beta, gamma);
-                canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
+    for (Triangle *triangle : triangles) {
+        Vec4 tr, bl;
+    
+        Vec4 v0Projected = transformPointToScreenSpace(triangle->v0, FOV, zNear, zFar);
+        Vec4 v1Projected = transformPointToScreenSpace(triangle->v1, FOV, zNear, zFar);
+        Vec4 v2Projected = transformPointToScreenSpace(triangle->v2, FOV, zNear, zFar);
+    
+        findBounds(v0Projected, v1Projected, v2Projected, tr, bl);
+    
+        for (int y = (int)bl.y; y < (int)tr.y + 1; y++) {
+            for (int x = (int)bl.x; x < (int)tr.x + 1; x++) {
+                Vec4 p(x + 0.5f, y + 0.5f, 0, 0);
+                // Compute triangle here
+                Vec4 e0 = v1Projected - v0Projected;
+                Vec4 e1 = v2Projected - v1Projected;
+                Vec4 e2 = v0Projected - v2Projected;
+    
+                float alpha = edgeFunction(v1Projected, v0Projected, p);
+                float beta = edgeFunction(v2Projected, v1Projected, p);
+                float gamma = edgeFunction(v0Projected, v2Projected, p);
+                float projArea = e0.x * e1.y - e0.y * e1.x;
+                float area = 1.0f / projArea;
+    
+                alpha *= area;
+                beta *= area;
+                gamma *= area;
+    
+                if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) {
+                    Colour frag = simpleInterpolateAttribute(Colour(1.0f, 0, 0), Colour(0, 1.0f, 0), Colour(0, 0, 1.0f),  alpha, beta, gamma);
+                    canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
+                }
+    
             }
-
         }
     }
+
 }
 
 void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, float d2, std::vector<Triangle>& out) {
@@ -226,17 +229,19 @@ int main() {
     while (running)
     {
         // Check for input (key presses or window events)
+        std::vector<Triangle*> triangles;
         Triangle triangle(
             Vec4(0.0f, 0.3f, z, 0.0f),
             Vec4(-0.3f, -0.3f, z, 0.0f),
             Vec4(0.3f, -0.3f, z, 0.0f)
         );
+        triangles.push_back(&triangle);
 
         // Clear the window for the next frame rendering
         canvas.clear();
 
         // Update game logic
-        draw(canvas, triangle);
+        draw(canvas, triangles);
         
 
         // Display the frame on the screen. This must be called once the frame
