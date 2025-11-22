@@ -35,6 +35,26 @@ T simpleInterpolateAttribute(T a0, T a1, T a2, float alpha, float beta, float ga
     return (a0 * alpha) + (a1 * beta) + (a2 * gamma);
 }
 
+template<typename T>
+T perspectiveCorrectInterpolateAttribute(
+    T a0,
+    T a1,
+    T a2,
+    float v0_w,
+    float v1_w,
+    float v2_w,
+    float alpha,
+    float beta,
+    float gamma) {
+
+        float frag_w = (alpha * v0_w) + (beta * v1_w) + (gamma * v2_w);
+        T attrib[3];
+        attrib[0] = a0 * alpha * v0_w;
+        attrib[1] = a1 * beta * v1_w;
+        attrib[2] = a2 * gamma * v2_w;
+        return ((attrib[0] + attrib[1] + attrib[2]) / frag_w);
+}
+
 Vec4 transformPointToScreenSpace(Vec4 &point) {
     Matrix m;
     float FOV = 45;
