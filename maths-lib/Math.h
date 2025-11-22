@@ -320,6 +320,10 @@ class Vec4 {
     Vec4 divideByW() {
         return Vec4( x / w, y / w, z / w, w / w);
     }
+
+    float dot(const Vec4 &pVec) const {
+        return v[0] * pVec.v[0] + v[1] * pVec.v[1] + v[2] * pVec.v[2] + v[3] * pVec.v[3];
+    }
 };
 
 Vec4 Max(const Vec4 &v1, const Vec4 &v2) {
