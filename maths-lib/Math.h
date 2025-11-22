@@ -139,7 +139,7 @@ class Vec3 {
         return v[0] * pVec.v[0] + v[1] * pVec.v[1] + v[2] * pVec.v[2];
     }
 
-    Vec3 cross(const Vec3 &v1) {
+    Vec3 cross(const Vec3 &v1) const {
         return Vec3(v1.v[1] * v[2] - v1.v[2] * v[1], v1.v[2] * v[0] - v1.v[0] * v[2], v1.v[0] * v[1] - v1.v[1] * v[0]);
     }
 
@@ -537,6 +537,28 @@ class Matrix {
         m[11] = (- (zFar * zNear)) / (zFar - zNear);
         m[14] = 1;
         m[15] = 0;
+    }
+
+    void setLookatMatrix(const Vec3 &from, const Vec3 &to, const Vec3 &up) {
+        setIdentity();
+        Vec3 dir = (to - from) / ((to - from).length());
+        Vec3 right = up.cross(dir);
+        Vec3 upLine = dir.cross(right);
+
+        m[0] = right.x;
+        m[1] = right.y;
+        m[2] = right.z;
+        m[3] = (-from).dot(right);
+
+        m[4] = upLine.x;
+        m[5] = upLine.y;
+        m[6] = upLine.z;
+        m[7] = (-from).dot(upLine);
+
+        m[8] = dir.x;
+        m[9] = dir.y;
+        m[10] = dir.z;
+        m[11] = (-from).dot(dir);
     }
 
 };
