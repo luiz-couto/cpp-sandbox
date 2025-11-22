@@ -19,6 +19,16 @@ class Triangle {
     Triangle(Vec4 v0, Vec4 v1, Vec4 v2) : v0(v0), v1(v1), v2(v2) {}
 };
 
+class Camera {
+    public:
+    Vec3 from;
+    Vec3 to;
+    Vec3 up;
+
+    Camera() : from(0, 0, 5), to(0, 0, 0), up(0, -1, 0) {}
+    Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
+};
+
 float edgeFunction(const Vec4 &v0, const Vec4 &v1, const Vec4 &p) {
     return (((p.x - v0.x) * (v1.y - v0.y)) - ((v1.x - v0.x) * (p.y - v0.y)));
 }
@@ -66,14 +76,135 @@ Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar
     float vy = ((pLine.y + 1) / 2) * WINDOW_HEIGHT;
 
     return Vec4(vx, vy, 0, 0);
-} 
+}
 
-void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> triangles) {
+void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, float d2, std::vector<Triangle*> &out) {
+    Vec4 verts[3]  = { v0, v1, v2 };
+    float dist[3]  = { d0, d1, d2 };
+
+    // Temporary arrays store indices
+    int inside[3];
+    int outside[3];
+    int countInside = 0, countOutside = 0;
+
+    for (int i = 0; i < 3; i++) {
+        if (dist[i] >= 0)
+            inside[countInside++] = i;
+        else
+            outside[countOutside++] = i;
+    }
+
+    // Case: all outside — return nothing
+    if (countInside == 0) return;
+
+    // Case: all inside — keep triangle
+    if (countInside == 3) {
+        out.push_back(new Triangle(v0, v1, v2));
+        return;
+    }
+
+    // Helper lambda for intersection
+    auto intersect = [&](int i_in, int i_out)
+    {
+        float t = dist[i_in] / (dist[i_in] - dist[i_out]);
+        return verts[i_in] + (verts[i_out] - verts[i_in]) * t;
+    };
+
+    if (countInside == 1 && countOutside == 2)
+    {
+        int i0 = inside[0];
+        int o0 = outside[0];
+        int o1 = outside[1];
+
+        Vec4 A = verts[i0];
+        Vec4 B = intersect(i0, o0);
+        Vec4 C = intersect(i0, o1);
+
+        out.push_back(new Triangle(A, B, C));
+    }
+    else if (countInside == 2 && countOutside == 1)
+    {
+        int i0 = inside[0];
+        int i1 = inside[1];
+        int o0 = outside[0];
+
+        Vec4 A = verts[i0];
+        Vec4 B = verts[i1];
+        Vec4 C = intersect(i0, o0);
+        Vec4 D = intersect(i1, o0);
+
+        out.push_back(new Triangle(A, B, C));
+        out.push_back(new Triangle(B, D, C));
+    }
+}
+
+
+std::vector<Triangle*> clipping(std::vector<Triangle*> triangles, float FOV, float zNear, float zFar) {
+    Matrix m;
+    m.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    Vec4 P2 = Vec4(m[8], m[9], m[10], m[11]);
+    Vec4 P3 = Vec4(m[12], m[13], m[14], m[15]);
+
+    Vec4 planeNear = P2 + P3;
+    Vec4 planeFar  = -P2 + P3;
+
+    std::vector<Triangle*> nearClipped;
+    std::vector<Triangle*> finalOut;
+
+    // Pass 1: near plane
+    for (auto& tri : triangles) {   
+        Vec4 a = m.mul(tri->v0);
+        Vec4 b = m.mul(tri->v1);
+        Vec4 c = m.mul(tri->v2);
+
+        float da = planeNear.dot(a);
+        float db = planeNear.dot(b);
+        float dc = planeNear.dot(c);
+
+        clip(a, b, c, da, db, dc, nearClipped);
+    }
+
+    // Pass 2: far plane
+    for (auto& tri : nearClipped) {
+        Vec4 a = tri->v0;
+        Vec4 b = tri->v1;
+        Vec4 c = tri->v2;
+
+        float da = planeFar.dot(a);
+        float db = planeFar.dot(b);
+        float dc = planeFar.dot(c);
+
+        clip(a, b, c, da, db, dc, finalOut);
+    }
+
+    return finalOut;
+}
+
+
+void transformTrianglesToViewSpace(std::vector<Triangle*> &triangles) {
+    Camera camera;
+    Matrix viewMatrix;
+    viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
+
+    for (Triangle* tri : triangles) {
+        tri->v0 = viewMatrix.mul(tri->v0);
+        tri->v1 = viewMatrix.mul(tri->v1);
+        tri->v2 = viewMatrix.mul(tri->v2);
+    }
+}
+
+void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangles) {
     float FOV = 45;
     float zNear = 0.1;
     float zFar  = 1000;
 
-    for (Triangle *triangle : triangles) {
+    transformTrianglesToViewSpace(triangles);
+
+    std::vector<Triangle*> clippedTriangles = clipping(triangles, FOV, zNear, zFar);
+    //std::println("Clipped triangles Size: {}", clippedTriangles.size());
+
+    for (Triangle *triangle : clippedTriangles) {
         Vec4 tr, bl;
     
         Vec4 v0Projected = transformPointToScreenSpace(triangle->v0, FOV, zNear, zFar);
@@ -111,112 +242,6 @@ void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> triangles
 
 }
 
-void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, float d2, std::vector<Triangle>& out) {
-    Vec4 verts[3]  = { v0, v1, v2 };
-    float dist[3]  = { d0, d1, d2 };
-
-    // Temporary arrays store indices
-    int inside[3];
-    int outside[3];
-    int countInside = 0, countOutside = 0;
-
-    for (int i = 0; i < 3; i++) {
-        if (dist[i] >= 0)
-            inside[countInside++] = i;
-        else
-            outside[countOutside++] = i;
-    }
-
-    // Case: all outside — return nothing
-    if (countInside == 0) return;
-
-    // Case: all inside — keep triangle
-    if (countInside == 3) {
-        out.push_back(Triangle(v0, v1, v2));
-        return;
-    }
-
-    // Helper lambda for intersection
-    auto intersect = [&](int i_in, int i_out)
-    {
-        float t = dist[i_in] / (dist[i_in] - dist[i_out]);
-        return verts[i_in] + (verts[i_out] - verts[i_in]) * t;
-    };
-
-    if (countInside == 1 && countOutside == 2)
-    {
-        int i0 = inside[0];
-        int o0 = outside[0];
-        int o1 = outside[1];
-
-        Vec4 A = verts[i0];
-        Vec4 B = intersect(i0, o0);
-        Vec4 C = intersect(i0, o1);
-
-        out.push_back(Triangle(A, B, C));
-    }
-    else if (countInside == 2 && countOutside == 1)
-    {
-        int i0 = inside[0];
-        int i1 = inside[1];
-        int o0 = outside[0];
-
-        Vec4 A = verts[i0];
-        Vec4 B = verts[i1];
-        Vec4 C = intersect(i0, o0);
-        Vec4 D = intersect(i1, o0);
-
-        out.push_back(Triangle(A, B, C));
-        out.push_back(Triangle(B, D, C));
-    }
-}
-
-
-std::vector<Triangle> clipping(std::vector<Triangle> triangles, float FOV, float zNear, float zFar) {
-    Matrix m;
-    m.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    Vec4 P2 = Vec4(m[8],  m[9],  m[10], m[11]);
-    Vec4 P3 = Vec4(m[12], m[13], m[14], m[15]);
-
-    Vec4 planeNear =  P2 + P3;
-    Vec4 planeFar  = -P2 + P3;
-
-    std::vector<Triangle> nearClipped;
-    std::vector<Triangle> finalOut;
-
-    // Pass 1: near plane
-    for (auto& tri : triangles)
-    {
-        Vec4 a = m.mul(tri.v0);
-        Vec4 b = m.mul(tri.v1);
-        Vec4 c = m.mul(tri.v2);
-
-        float da = planeNear.dot(a);
-        float db = planeNear.dot(b);
-        float dc = planeNear.dot(c);
-
-        clip(a, b, c, da, db, dc, nearClipped);
-    }
-
-    // Pass 2: far plane
-    for (auto& tri : nearClipped)
-    {
-        Vec4 a = tri.v0;
-        Vec4 b = tri.v1;
-        Vec4 c = tri.v2;
-
-        float da = planeFar.dot(a);
-        float db = planeFar.dot(b);
-        float dc = planeFar.dot(c);
-
-        clip(a, b, c, da, db, dc, finalOut);
-    }
-
-    return finalOut;
-}
-
-
 int main() {
     GamesEngineeringBase::Window canvas;
     canvas.create(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME);
@@ -224,16 +249,14 @@ int main() {
 
     float z = -1.0f;
 
-    
-
     while (running)
     {
         // Check for input (key presses or window events)
         std::vector<Triangle*> triangles;
         Triangle triangle(
-            Vec4(0.0f, 0.3f, z, 0.0f),
-            Vec4(-0.3f, -0.3f, z, 0.0f),
-            Vec4(0.3f, -0.3f, z, 0.0f)
+            Vec4(0.0f, 0.3f, z, 1.0f),
+            Vec4(-0.3f, -0.3f, z, 1.0f),
+            Vec4(0.3f, -0.3f, z, 1.0f)
         );
         triangles.push_back(&triangle);
 
@@ -249,6 +272,7 @@ int main() {
         canvas.present();
 
         z += 0.001f;
+        //running = false; // For now, just run one frame
     }
     return 0;
 }
