@@ -202,7 +202,6 @@ void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangle
     transformTrianglesToViewSpace(triangles);
 
     std::vector<Triangle*> clippedTriangles = clipping(triangles, FOV, zNear, zFar);
-    //std::println("Clipped triangles Size: {}", clippedTriangles.size());
 
     for (Triangle *triangle : clippedTriangles) {
         Vec4 tr, bl;
