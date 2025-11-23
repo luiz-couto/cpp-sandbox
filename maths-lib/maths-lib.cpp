@@ -407,9 +407,6 @@ int main() {
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
         canvas.present();
-
-        // z += 0.001f;
-        //running = false; // For now, just run one frame
     }
     return 0;
 }
