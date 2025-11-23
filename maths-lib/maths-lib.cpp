@@ -16,8 +16,19 @@ class Triangle {
         Vec4 v[3];
         struct { Vec4 v0, v1, v2; };
     };
+    union {
+        Vec3 n[3];
+        struct { Vec3 n0, n1, n2; };
+    };
 
-    Triangle(Vec4 v0, Vec4 v1, Vec4 v2) : v0(v0), v1(v1), v2(v2) {}
+    Triangle(
+        Vec4 v0,
+        Vec4 v1,
+        Vec4 v2,
+        Vec3 n0,
+        Vec3 n1,
+        Vec3 n2
+    ) : v0(v0), v1(v1), v2(v2), n0(n0), n1(n1), n2(n2) {}
 };
 
 class Camera {
@@ -79,7 +90,7 @@ Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar
     return Vec4(vx, vy, 0, 0);
 }
 
-void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, float d2, std::vector<Triangle*> &out) {
+void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, Vec3 n0, Vec3 n1, Vec3 n2, float d0, float d1, float d2, std::vector<Triangle*> &out) {
     Vec4 verts[3]  = { v0, v1, v2 };
     float dist[3]  = { d0, d1, d2 };
 
@@ -100,7 +111,7 @@ void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, fl
 
     // Case: all inside — keep triangle
     if (countInside == 3) {
-        out.push_back(new Triangle(v0, v1, v2));
+        out.push_back(new Triangle(v0, v1, v2, n0, n1, n2));
         return;
     }
 
@@ -121,7 +132,7 @@ void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, fl
         Vec4 B = intersect(i0, o0);
         Vec4 C = intersect(i0, o1);
 
-        out.push_back(new Triangle(A, B, C));
+        out.push_back(new Triangle(A, B, C, n0, n1, n2));
     }
     else if (countInside == 2 && countOutside == 1)
     {
@@ -134,8 +145,8 @@ void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, float d0, float d1, fl
         Vec4 C = intersect(i0, o0);
         Vec4 D = intersect(i1, o0);
 
-        out.push_back(new Triangle(A, B, C));
-        out.push_back(new Triangle(B, D, C));
+        out.push_back(new Triangle(A, B, C, n0, n1, n2));
+        out.push_back(new Triangle(B, D, C, n0, n1, n2));
     }
 }
 
@@ -163,7 +174,7 @@ std::vector<Triangle*> clipping(std::vector<Triangle*> triangles, float FOV, flo
         float db = planeNear.dot(b);
         float dc = planeNear.dot(c);
 
-        clip(a, b, c, da, db, dc, nearClipped);
+        clip(a, b, c, tri->n0, tri->n1, tri->n2, da, db, dc, nearClipped);
     }
 
     // Pass 2: far plane
@@ -176,7 +187,7 @@ std::vector<Triangle*> clipping(std::vector<Triangle*> triangles, float FOV, flo
         float db = planeFar.dot(b);
         float dc = planeFar.dot(c);
 
-        clip(a, b, c, da, db, dc, finalOut);
+        clip(a, b, c, tri->n0, tri->n1, tri->n2, da, db, dc, finalOut);
     }
 
     return finalOut;
@@ -195,16 +206,12 @@ void transformTrianglesToViewSpace(std::vector<Triangle*> &triangles) {
     }
 }
 
-void simpleShading(const Triangle& triangle, const Vec4& p, Colour& outColour) {
+void simpleShading(const Triangle& triangle, const Vec4& p, Colour& outColour, Vec3 &normal) {
     float PI = 3.1415f;
     Vec4 e0 = triangle.v1 - triangle.v0;
     Vec4 e1 = triangle.v2 - triangle.v1;
 
-    Vec3 N = Vec3(
-        (e0.y * e1.z) - (e0.z * e1.y),
-        (e0.z * e1.x) - (e0.x * e1.z),
-        (e0.x * e1.y) - (e0.y * e1.x)
-    ).normalize();
+    Vec3 N = normal.normalize();
 
     Vec3 omega_i = Vec3(1, 1, 0).normalize();
     Colour rho(0, 1.0f, 0);
@@ -260,7 +267,31 @@ void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangle
                 if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) {
                     if (z < zBuffer[y * WINDOW_WIDTH + x]) {
                         zBuffer[y * WINDOW_WIDTH + x] = z;
-                        Colour frag = simpleInterpolateAttribute(Colour(1.0f, 0, 0), Colour(0, 1.0f, 0), Colour(0, 0, 1.0f),  alpha, beta, gamma);
+                        Colour frag = perspectiveCorrectInterpolateAttribute<Colour>(
+                            Colour(0.0f, 0.7f, 0.3f),
+                            Colour(0.0f, 0.7f, 0.3f),
+                            Colour(0.0f, 0.7f, 0.3f),
+                            triangle->v0.w,
+                            triangle->v1.w,
+                            triangle->v2.w,
+                            alpha,
+                            beta,
+                            gamma
+                        );
+
+                        Vec3 normal = perspectiveCorrectInterpolateAttribute<Vec3>(
+                            triangle->n0,
+                            triangle->n1,
+                            triangle->n2,
+                            triangle->v0.w,
+                            triangle->v1.w,
+                            triangle->v2.w,
+                            alpha,
+                            beta,
+                            gamma
+                        );
+
+                        simpleShading(*triangle, p, frag, normal);
                         canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
                     }
                 }
@@ -285,21 +316,30 @@ int main() {
     for (int i = 0; i < gemmeshes.size(); i++) {
         for (int j = 0; j < gemmeshes[i].indices.size(); j = j + 3) {
             GEMLoader::GEMVec3 vec1;
+            GEMLoader::GEMVec3 norm1;
             int index = gemmeshes[i].indices[j];
             vec1 = gemmeshes[i].verticesStatic[index].position;
+            norm1 = gemmeshes[i].verticesStatic[index].normal;
 
             GEMLoader::GEMVec3 vec2;            
+            GEMLoader::GEMVec3 norm2;
             int index2 = gemmeshes[i].indices[j + 1];
             vec2 = gemmeshes[i].verticesStatic[index2].position;
+            norm2 = gemmeshes[i].verticesStatic[index2].normal;
 
             GEMLoader::GEMVec3 vec3;            
+            GEMLoader::GEMVec3 norm3;
             int index3 = gemmeshes[i].indices[j + 2];
             vec3 = gemmeshes[i].verticesStatic[index3].position;
+            norm3 = gemmeshes[i].verticesStatic[index3].normal;
             
             Triangle* triangle = new Triangle(
                 Vec4(vec1.x, vec1.y, vec1.z, 1.0f),
                 Vec4(vec2.x, vec2.y, vec2.z, 1.0f),
-                Vec4(vec3.x, vec3.y, vec3.z, 1.0f)
+                Vec4(vec3.x, vec3.y, vec3.z, 1.0f),
+                Vec3(norm1.x, norm1.y, norm1.z),
+                Vec3(norm2.x, norm2.y, norm2.z),
+                Vec3(norm3.x, norm3.y, norm3.z)
             );
             trianglesList.push_back(triangle);
         }
