@@ -87,7 +87,7 @@ Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar
     float vx = ((pLine.x + 1) / 2) * WINDOW_WIDTH;
     float vy = ((pLine.y + 1) / 2) * WINDOW_HEIGHT;
 
-    return Vec4(vx, vy, 0, 0);
+    return Vec4(vx, vy, pLine.z, pLine.w);
 }
 
 void clip(
