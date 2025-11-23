@@ -384,11 +384,19 @@ int main() {
         }
     }
 
+    GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
+    float radius = 0.5f;
+    float time = 0.0f;
     Camera camera;
 
     while (running)
     {
         // Check for input (key presses or window events)
+        float dt = tim.dt();
+        time += dt;
+
+        Vec3 from = Vec3(radius * cos(time), 0, radius * sinf(time));
+        camera.from = from;
 
         // Clear the window for the next frame rendering
         canvas.clear();
