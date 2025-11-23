@@ -305,18 +305,22 @@ void draw(GamesEngineeringBase::Window &canvas, Camera &camera, std::vector<Tria
     
                 if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) {
                     if (z < zBuffer[y * WINDOW_WIDTH + x]) {
+                        
                         zBuffer[y * WINDOW_WIDTH + x] = z;
-                        Colour frag = perspectiveCorrectInterpolateAttribute<Colour>(
-                            Colour(0.0f, 0.7f, 0.3f),
-                            Colour(0.0f, 0.7f, 0.3f),
-                            Colour(0.0f, 0.7f, 0.3f),
-                            triangle->v0.w,
-                            triangle->v1.w,
-                            triangle->v2.w,
-                            alpha,
-                            beta,
-                            gamma
-                        );
+                        
+                        // Colour frag = perspectiveCorrectInterpolateAttribute<Colour>(
+                        //     Colour(0.0f, 0.1f, 0.9f),
+                        //     Colour(0.0f, 0.1f, 0.9f),
+                        //     Colour(0.0f, 0.1f, 0.9f),
+                        //     triangle->v0.w,
+                        //     triangle->v1.w,
+                        //     triangle->v2.w,
+                        //     alpha,
+                        //     beta,
+                        //     gamma
+                        // );
+
+                        Colour frag;
 
                         Vec3 normal = perspectiveCorrectInterpolateAttribute<Vec3>(
                             triangle->n0,
