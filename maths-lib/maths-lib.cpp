@@ -82,12 +82,14 @@ Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar
 
     m.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
     Vec4 pc = m.mul(point);
+    float originalW = pc.w;
+
     Vec4 pLine = pc.divideByW();
 
     float vx = ((pLine.x + 1) / 2) * WINDOW_WIDTH;
     float vy = ((pLine.y + 1) / 2) * WINDOW_HEIGHT;
 
-    return Vec4(vx, vy, pLine.z, pLine.w);
+    return Vec4(vx, vy, pLine.z, originalW);
 }
 
 void clip(
@@ -291,19 +293,18 @@ void draw(GamesEngineeringBase::Window &canvas, Camera &camera, std::vector<Tria
                 Vec4 e1 = v2Projected - v1Projected;
                 Vec4 e2 = v0Projected - v2Projected;
     
-                float alpha = edgeFunction(v1Projected, v0Projected, p);
-                float beta = edgeFunction(v2Projected, v1Projected, p);
-                float gamma = edgeFunction(v0Projected, v2Projected, p);
-                float projArea = e0.x * e1.y - e0.y * e1.x;
-                float area = 1.0f / projArea;
-    
-                alpha *= area;
-                beta *= area;
-                gamma *= area;
+                float area = edgeFunction(v0Projected, v1Projected, v2Projected);
+                if (area == 0) continue; 
+                float invArea = 1.0f / area;
 
-                float z = v0Projected.z * alpha + v1Projected.z * beta + v2Projected.z * gamma;
+                float alpha = edgeFunction(v1Projected, v2Projected, p) * invArea;
+                float beta  = edgeFunction(v2Projected, v0Projected, p) * invArea;
+                float gamma = edgeFunction(v0Projected, v1Projected, p) * invArea;
     
                 if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) {
+
+                    float z = v0Projected.z * alpha + v1Projected.z * beta + v2Projected.z * gamma;
+
                     if (z < zBuffer[y * WINDOW_WIDTH + x]) {
                         
                         zBuffer[y * WINDOW_WIDTH + x] = z;
