@@ -4,6 +4,7 @@
 #include "Math.h"
 
 #include "GamesEngineeringBase.h"
+#include "GEMLoader.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -25,7 +26,7 @@ class Camera {
     Vec3 to;
     Vec3 up;
 
-    Camera() : from(0, 0, 5), to(0, 0, 0), up(0, -1, 0) {}
+    Camera() : from(0, 0, 1), to(0, 0, 0), up(0, -1, 0) {}
     Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
 };
 
@@ -194,17 +195,35 @@ void transformTrianglesToViewSpace(std::vector<Triangle*> &triangles) {
     }
 }
 
-static float zBuffer[WINDOW_WIDTH * WINDOW_HEIGHT];
+void simpleShading(const Triangle& triangle, const Vec4& p, Colour& outColour) {
+    float PI = 3.1415f;
+    Vec4 e0 = triangle.v1 - triangle.v0;
+    Vec4 e1 = triangle.v2 - triangle.v1;
+
+    Vec3 N = Vec3(
+        (e0.y * e1.z) - (e0.z * e1.y),
+        (e0.z * e1.x) - (e0.x * e1.z),
+        (e0.x * e1.y) - (e0.y * e1.x)
+    ).normalize();
+
+    Vec3 omega_i = Vec3(1, 1, 0).normalize();
+    Colour rho(0, 1.0f, 0);
+    Colour L(1.0f, 1.0f, 1.0f);
+    Colour ambient(0.5f, 0.5f, 0.5f);
+
+    float NdotL = max(N.x * omega_i.x + N.y * omega_i.y + N.z * omega_i.z, 0.0f);
+    outColour = (rho / PI) * (L * NdotL + ambient);
+}
+
 
 void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangles) {
     float FOV = 45;
     float zNear = 0.1;
     float zFar  = 1000;
 
-    transformTrianglesToViewSpace(triangles);
-
     std::vector<Triangle*> clippedTriangles = clipping(triangles, FOV, zNear, zFar);
 
+    float* zBuffer = new float[WINDOW_WIDTH * WINDOW_HEIGHT];
     for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++) {
         zBuffer[i] = 1;
     }
@@ -248,6 +267,7 @@ void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangle
             }
         }
     }
+    delete[] zBuffer;
 }
 
 int main() {
@@ -257,29 +277,51 @@ int main() {
 
     float z = -1.0f;
 
+    std::vector<GEMLoader::GEMMesh> gemmeshes;
+    GEMLoader::GEMModelLoader loader;
+    loader.load("assets/bunny.gem", gemmeshes);
+
+    std::vector<Triangle*> trianglesList;
+    for (int i = 0; i < gemmeshes.size(); i++) {
+        for (int j = 0; j < gemmeshes[i].indices.size(); j = j + 3) {
+            GEMLoader::GEMVec3 vec1;
+            int index = gemmeshes[i].indices[j];
+            vec1 = gemmeshes[i].verticesStatic[index].position;
+
+            GEMLoader::GEMVec3 vec2;            
+            int index2 = gemmeshes[i].indices[j + 1];
+            vec2 = gemmeshes[i].verticesStatic[index2].position;
+
+            GEMLoader::GEMVec3 vec3;            
+            int index3 = gemmeshes[i].indices[j + 2];
+            vec3 = gemmeshes[i].verticesStatic[index3].position;
+            
+            Triangle* triangle = new Triangle(
+                Vec4(vec1.x, vec1.y, vec1.z, 1.0f),
+                Vec4(vec2.x, vec2.y, vec2.z, 1.0f),
+                Vec4(vec3.x, vec3.y, vec3.z, 1.0f)
+            );
+            trianglesList.push_back(triangle);
+        }
+    }
+
+    transformTrianglesToViewSpace(trianglesList);
+
     while (running)
     {
         // Check for input (key presses or window events)
-        std::vector<Triangle*> triangles;
-        Triangle triangle(
-            Vec4(0.0f, 0.3f, z, 1.0f),
-            Vec4(-0.3f, -0.3f, z, 1.0f),
-            Vec4(0.3f, -0.3f, z, 1.0f)
-        );
-        triangles.push_back(&triangle);
 
         // Clear the window for the next frame rendering
         canvas.clear();
 
         // Update game logic
-        draw(canvas, triangles);
+        draw(canvas, trianglesList);
         
-
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
         canvas.present();
 
-        z += 0.001f;
+        // z += 0.001f;
         //running = false; // For now, just run one frame
     }
     return 0;
