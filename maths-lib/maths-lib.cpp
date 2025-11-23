@@ -254,7 +254,7 @@ void simpleShading(const Triangle& triangle, const Vec4& p, Colour& outColour, V
     Vec3 N = normal.normalize();
 
     Vec3 omega_i = Vec3(1, 1, 0).normalize();
-    Colour rho(0, 1.0f, 0);
+    Colour rho(0.78f, 0.38f, 0.78f);
     Colour L(1.0f, 1.0f, 1.0f);
     Colour ambient(0.5f, 0.5f, 0.5f);
 
@@ -399,6 +399,7 @@ int main() {
         // Check for input (key presses or window events)
         float dt = tim.dt();
         time += dt;
+        time = fmodf(time, 2 * 3.1415f); // Avoid precision issues
 
         Vec3 from = Vec3(radius * cos(time), 0, radius * sinf(time));
         camera.from = from;
