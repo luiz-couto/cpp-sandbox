@@ -37,7 +37,7 @@ class Camera {
     Vec3 to;
     Vec3 up;
 
-    Camera() : from(0, 0, 1), to(0, 0, 0), up(0, -1, 0) {}
+    Camera() : from(0, 0, 0.5f), to(0, 0, 0), up(0, -1, 0) {}
     Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
 };
 
@@ -90,51 +90,72 @@ Vec4 transformPointToScreenSpace(Vec4 &point, float FOV, float zNear, float zFar
     return Vec4(vx, vy, 0, 0);
 }
 
-void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, Vec3 n0, Vec3 n1, Vec3 n2, float d0, float d1, float d2, std::vector<Triangle*> &out) {
-    Vec4 verts[3]  = { v0, v1, v2 };
-    float dist[3]  = { d0, d1, d2 };
+void clip(
+    const Vec4& v0, const Vec4& v1, const Vec4& v2,
+    const Vec3& n0, const Vec3& n1, const Vec3& n2,
+    float d0, float d1, float d2,
+    std::vector<Triangle*> &out)
+{
+    Vec4  verts[3]  = { v0, v1, v2 };
+    Vec3  norms[3]  = { n0, n1, n2 };
+    float dist[3]   = { d0, d1, d2 };
 
-    // Temporary arrays store indices
-    int inside[3];
-    int outside[3];
+    int inside[3], outside[3];
     int countInside = 0, countOutside = 0;
 
-    for (int i = 0; i < 3; i++) {
-        if (dist[i] >= 0)
-            inside[countInside++] = i;
-        else
-            outside[countOutside++] = i;
+    for (int i = 0; i < 3; i++)
+    {
+        if (dist[i] >= 0) inside[countInside++] = i;
+        else outside[countOutside++] = i;
     }
 
-    // Case: all outside — return nothing
+    // All outside → discard
     if (countInside == 0) return;
 
-    // Case: all inside — keep triangle
-    if (countInside == 3) {
-        out.push_back(new Triangle(v0, v1, v2, n0, n1, n2));
+    // All inside → keep as is
+    if (countInside == 3)
+    {
+        out.push_back(new Triangle(
+            v0, v1, v2,
+            n0, n1, n2
+        ));
         return;
     }
 
-    // Helper lambda for intersection
-    auto intersect = [&](int i_in, int i_out)
+    // Intersection helper
+    auto intersectV = [&](int i_in, int i_out)
     {
         float t = dist[i_in] / (dist[i_in] - dist[i_out]);
         return verts[i_in] + (verts[i_out] - verts[i_in]) * t;
     };
 
-    if (countInside == 1 && countOutside == 2)
+    auto intersectN = [&](int i_in, int i_out)
+    {
+        float t = dist[i_in] / (dist[i_in] - dist[i_out]);
+        Vec3 result = norms[i_in] + (norms[i_out] - norms[i_in]) * t;
+        return result.normalize();
+    };
+
+    // One inside → 1 output triangle
+    if (countInside == 1)
     {
         int i0 = inside[0];
         int o0 = outside[0];
         int o1 = outside[1];
 
         Vec4 A = verts[i0];
-        Vec4 B = intersect(i0, o0);
-        Vec4 C = intersect(i0, o1);
+        Vec4 B = intersectV(i0, o0);
+        Vec4 C = intersectV(i0, o1);
 
-        out.push_back(new Triangle(A, B, C, n0, n1, n2));
+        Vec3 nA = norms[i0];
+        Vec3 nB = intersectN(i0, o0);
+        Vec3 nC = intersectN(i0, o1);
+
+        out.push_back(new Triangle(A, B, C, nA, nB, nC));
     }
-    else if (countInside == 2 && countOutside == 1)
+
+    // Two inside → 2 output triangles
+    else if (countInside == 2)
     {
         int i0 = inside[0];
         int i1 = inside[1];
@@ -142,11 +163,19 @@ void clip(const Vec4& v0, const Vec4& v1, const Vec4& v2, Vec3 n0, Vec3 n1, Vec3
 
         Vec4 A = verts[i0];
         Vec4 B = verts[i1];
-        Vec4 C = intersect(i0, o0);
-        Vec4 D = intersect(i1, o0);
+        Vec4 C = intersectV(i0, o0);
+        Vec4 D = intersectV(i1, o0);
 
-        out.push_back(new Triangle(A, B, C, n0, n1, n2));
-        out.push_back(new Triangle(B, D, C, n0, n1, n2));
+        Vec3 nA = norms[i0];
+        Vec3 nB = norms[i1];
+        Vec3 nC = intersectN(i0, o0);
+        Vec3 nD = intersectN(i1, o0);
+
+        // Triangle 1: A, B, C
+        out.push_back(new Triangle(A, B, C, nA, nB, nC));
+
+        // Triangle 2: B, D, C
+        out.push_back(new Triangle(B, D, C, nB, nD, nC));
     }
 }
 
@@ -194,16 +223,25 @@ std::vector<Triangle*> clipping(std::vector<Triangle*> triangles, float FOV, flo
 }
 
 
-void transformTrianglesToViewSpace(std::vector<Triangle*> &triangles) {
-    Camera camera;
+std::vector<Triangle*> transformTrianglesToViewSpace(Camera &camera, std::vector<Triangle*> &triangles) {
     Matrix viewMatrix;
     viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
+    std::vector<Triangle*> transformedTriangles;
+
     for (Triangle* tri : triangles) {
-        tri->v0 = viewMatrix.mul(tri->v0);
-        tri->v1 = viewMatrix.mul(tri->v1);
-        tri->v2 = viewMatrix.mul(tri->v2);
+        Vec4 v0 = viewMatrix.mul(tri->v0);
+        Vec4 v1 = viewMatrix.mul(tri->v1);
+        Vec4 v2 = viewMatrix.mul(tri->v2);
+
+        transformedTriangles.push_back(new Triangle(
+            v0, v1, v2,
+            tri->n0,
+            tri->n1,
+            tri->n2
+        ));
     }
+    return transformedTriangles;
 }
 
 void simpleShading(const Triangle& triangle, const Vec4& p, Colour& outColour, Vec3 &normal) {
@@ -223,19 +261,20 @@ void simpleShading(const Triangle& triangle, const Vec4& p, Colour& outColour, V
 }
 
 
-void draw(GamesEngineeringBase::Window &canvas, std::vector<Triangle*> &triangles) {
+void draw(GamesEngineeringBase::Window &canvas, Camera &camera, std::vector<Triangle*> &triangles) {
     float FOV = 45;
     float zNear = 0.1;
     float zFar  = 1000;
 
-    std::vector<Triangle*> clippedTriangles = clipping(triangles, FOV, zNear, zFar);
+    std::vector<Triangle*> transformedTriangles = transformTrianglesToViewSpace(camera, triangles);
+    //std::vector<Triangle*> clippedTriangles = clipping(triangles, FOV, zNear, zFar);
 
     float* zBuffer = new float[WINDOW_WIDTH * WINDOW_HEIGHT];
     for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++) {
         zBuffer[i] = 1;
     }
 
-    for (Triangle *triangle : clippedTriangles) {
+    for (Triangle *triangle : transformedTriangles) {
         Vec4 tr, bl;
     
         Vec4 v0Projected = transformPointToScreenSpace(triangle->v0, FOV, zNear, zFar);
@@ -345,7 +384,7 @@ int main() {
         }
     }
 
-    transformTrianglesToViewSpace(trianglesList);
+    Camera camera;
 
     while (running)
     {
@@ -355,7 +394,7 @@ int main() {
         canvas.clear();
 
         // Update game logic
-        draw(canvas, trianglesList);
+        draw(canvas, camera, trianglesList);
         
         // Display the frame on the screen. This must be called once the frame
         //is finished in order to display the frame.
