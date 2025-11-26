@@ -36,26 +36,9 @@ public:
 
     Core() {}
 
-    // finds the adapter with bigger maxVideoMemory and uses it
-    // creates the device
-    // creates the 3 command queues: graphics, copy and compute
-    // creates the swapchain
-    // creates 2 command allocators and command lists
-    // creates the backbuffer descriptor heap: 2 descriptors - one for each backbuffer
-    // creates the render target views for each backbuffer
-    // creates the fences for the graphics queue
-    // creates the depth stencil view and resource
-    // creates the dsv descriptor heap
-    // allocates the depth stencil resource in GPU local memory
-    // create viewport and scissor rect
-    void init(HWND hwnd, int _width, int _height) {
-        wWidth = _width;
-        wHeight = _height;
-
+    void selectAdapter(IDXGIFactory6* factory) {
         IDXGIAdapter1* adapterf;
         std::vector<IDXGIAdapter1*> adapters;
-        IDXGIFactory6* factory = NULL;
-        CreateDXGIFactory(__uuidof(IDXGIFactory6), (void**)&factory);
         int i = 0;
 
         while (factory->EnumAdapters1(i, &adapterf) != DXGI_ERROR_NOT_FOUND) {
@@ -75,9 +58,10 @@ public:
         }
 
         adapter = adapters[useAdapterIndex];
-
         D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&device));
+    }
 
+    void createCommandQueues() {
         D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc = {};
         graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         device->CreateCommandQueue(&graphicsQueueDesc, IID_PPV_ARGS(&graphicsQueue));
@@ -89,6 +73,29 @@ public:
         D3D12_COMMAND_QUEUE_DESC computeQueueDesc = {};
         computeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
         device->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&computeQueue));
+    }
+
+    // finds the adapter with bigger maxVideoMemory and uses it
+    // creates the device
+    // creates the 3 command queues: graphics, copy and compute
+    // creates the swapchain
+    // creates 2 command allocators and command lists
+    // creates the backbuffer descriptor heap: 2 descriptors - one for each backbuffer
+    // creates the render target views for each backbuffer
+    // creates the fences for the graphics queue
+    // creates the depth stencil view and resource
+    // creates the dsv descriptor heap
+    // allocates the depth stencil resource in GPU local memory
+    // create viewport and scissor rect
+    void init(HWND hwnd, int _width, int _height) {
+        wWidth = _width;
+        wHeight = _height;
+
+        IDXGIFactory6* factory = NULL;
+        CreateDXGIFactory(__uuidof(IDXGIFactory6), (void**)&factory);
+
+        selectAdapter(factory);
+        createCommandQueues();
 
         DXGI_SWAP_CHAIN_DESC1 scDesc = {};
         scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
