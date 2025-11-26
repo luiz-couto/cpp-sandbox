@@ -1,6 +1,10 @@
 #include "Window.h"
 #include "Core.h"
 #include "Math.h"
+#include "PSOManager.h"
+
+#include <fstream>
+#include <sstream>
 
 // Refactor to a mesh class later
 struct PRIM_VERTEX {
@@ -76,19 +80,63 @@ class ScreenSpaceTriangle {
         // The names are used after in the shader to link the vertex data to the shader inputs
         inputLayout[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
         D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-        inputLayout[1] = { "COLOUR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+        inputLayout[1] = { "COLOUR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
         D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         inputLayoutDesc.NumElements = 2;
         inputLayoutDesc.pInputElementDescs = inputLayout;
     }
 };
 
+class Triangle {
+public:
+    ScreenSpaceTriangle sstriangle;
+    ID3DBlob* vertexShader;
+    ID3DBlob* pixelShader;
+    PSOManager psos;
+    
+    Triangle() {}
+
+    std::string readFile(const std::string& filename) {
+        std::ifstream file(filename);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        return buffer.str();
+    }
+
+    void init(Core* core) {
+        sstriangle.init(core);
+
+        std::string vertexShaderStr = readFile("VertexShader.hlsl");
+        std::string pixelShaderStr = readFile("PixelShader.hlsl");
+
+        ID3DBlob* status;
+        HRESULT hr = D3DCompile(vertexShaderStr.c_str(),strlen(vertexShaderStr.c_str()), NULL, NULL, NULL, "VS", "vs_5_0", 0, 0, &vertexShader, &status);
+        hr = D3DCompile(pixelShaderStr.c_str(), strlen(pixelShaderStr.c_str()), NULL, NULL, NULL, "PS", "ps_5_0", 0, 0, &pixelShader, &status);
+
+        if (FAILED(hr)) {
+            // Output the error message
+            // (char*)status->GetBufferPointer()
+            MessageBoxA(NULL, (char*)status->GetBufferPointer(), "Shader Compilation Error", MB_OK | MB_ICONERROR);
+        }
+
+        psos.createPSO(core, "Triangle", vertexShader, pixelShader, sstriangle.inputLayoutDesc);
+
+    }
+
+    void draw(Core* core) {
+        core->beginRenderPass();
+        psos.bind(core, "Triangle");
+        sstriangle.mesh.draw(core);
+    }
+};
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
     Window win;
     Core core;
     win.init(1024, 1024, 0, 0, "My Window");
     core.init(win.hwnd, win.windowWidth, win.windowHeight);
+    Triangle triangle;
+    triangle.init(&core);
 
     while (true) {
         core.resetCommandList();
@@ -97,6 +145,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         if (win.keys[VK_ESCAPE] == 1) {
             break;
         }
+        triangle.draw(&core);
         core.finishFrame();
     }
 

@@ -133,6 +133,7 @@
     <ClInclude Include="Core.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="PSOManager.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

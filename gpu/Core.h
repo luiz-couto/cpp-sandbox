@@ -31,6 +31,7 @@ public:
     D3D12_VIEWPORT viewport;
     D3D12_RECT scissorRect;
 
+    ID3D12RootSignature* rootSignature;
 
     GPUFence graphicsQueueFence[2];
 
@@ -101,6 +102,7 @@ public:
     // creates the dsv descriptor heap
     // allocates the depth stencil resource in GPU local memory
     // create viewport and scissor rect
+    // creates a basic root signature
     void init(HWND hwnd, int _width, int _height) {
         wWidth = _width;
         wHeight = _height;
@@ -198,6 +200,13 @@ public:
         scissorRect.right = wWidth;
         scissorRect.bottom = wHeight;
 
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        ID3DBlob* serialized;
+        ID3DBlob* error;
+        D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &serialized, &error);
+        device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        serialized->Release();
     }
 
     void resetCommandList() {
@@ -298,6 +307,12 @@ public:
         runCommandList(); // execute the copy commands
         flushGraphicsQueue(); // wait until copy is finished. This is inefficient. In practice use multiple command queues and async work
         uploadBuffer->Release();
+    }
+
+    void beginRenderPass() {
+        getCommandList()->RSSetViewports(1, &viewport);
+        getCommandList()->RSSetScissorRects(1, &scissorRect);
+        getCommandList()->SetGraphicsRootSignature(rootSignature);
     }
 
 };
