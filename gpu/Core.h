@@ -75,6 +75,20 @@ public:
         device->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&computeQueue));
     }
 
+    void initSwapChain(HWND &hwnd, IDXGIFactory6* factory, DXGI_SWAP_CHAIN_DESC1 &scDesc) {
+        scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        scDesc.Width = wWidth;
+        scDesc.Height = wHeight;
+        scDesc.SampleDesc.Count = 1; // MSAA here
+        scDesc.SampleDesc.Quality = 0;
+        scDesc.BufferCount = 2;
+        scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        IDXGISwapChain1* swapChain1;
+        factory->CreateSwapChainForHwnd(graphicsQueue, hwnd, &scDesc, NULL, NULL, &swapChain1);
+        swapChain1->QueryInterface(&swapchain);
+        swapChain1->Release();
+    }
+
     // finds the adapter with bigger maxVideoMemory and uses it
     // creates the device
     // creates the 3 command queues: graphics, copy and compute
@@ -98,17 +112,7 @@ public:
         createCommandQueues();
 
         DXGI_SWAP_CHAIN_DESC1 scDesc = {};
-        scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        scDesc.Width = wWidth;
-        scDesc.Height = wHeight;
-        scDesc.SampleDesc.Count = 1; // MSAA here
-        scDesc.SampleDesc.Quality = 0;
-        scDesc.BufferCount = 2;
-        scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        IDXGISwapChain1* swapChain1;
-        factory->CreateSwapChainForHwnd(graphicsQueue, hwnd, &scDesc, NULL, NULL, &swapChain1);
-        swapChain1->QueryInterface(&swapchain);
-        swapChain1->Release();
+        initSwapChain(hwnd, factory, scDesc);
 
         factory->Release();
 
