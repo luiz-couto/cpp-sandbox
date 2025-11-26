@@ -8,6 +8,7 @@ struct PRIM_VERTEX {
     Colour colour;
 };
 
+// What to draw
 class Mesh {
     public:
     ID3D12Resource* vertexBuffer;
@@ -41,14 +42,21 @@ class Mesh {
 
     }
 
+    void draw(Core* core) {
+        core->getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        core->getCommandList()->IASetVertexBuffers(0, 1, &vbView);
+        core->getCommandList()->DrawInstanced(3, 1, 0, 0);
+    }
+
 };
 
+// What to draw
 class ScreenSpaceTriangle {
     public:
     PRIM_VERTEX vertices[3];
     Mesh mesh;
 
-    // We may want to share this between multiple meshes later. Like a storage of Layouts
+    // We may want to share this between multiple meshes later. Like a storage of Layouts. A new class
     D3D12_INPUT_ELEMENT_DESC inputLayout[2];
     D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 
@@ -65,6 +73,7 @@ class ScreenSpaceTriangle {
 
         mesh.init(core, &vertices[0], sizeof(PRIM_VERTEX), 3);
 
+        // The names are used after in the shader to link the vertex data to the shader inputs
         inputLayout[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
         D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
         inputLayout[1] = { "COLOUR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,

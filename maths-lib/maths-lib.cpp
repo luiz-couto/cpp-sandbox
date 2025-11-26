@@ -294,7 +294,7 @@ void draw(GamesEngineeringBase::Window &canvas, Camera &camera, std::vector<Tria
                 Vec4 e2 = v0Projected - v2Projected;
     
                 float area = edgeFunction(v0Projected, v1Projected, v2Projected);
-                if (area == 0) continue; 
+                if (area == 0) continue;
                 float invArea = 1.0f / area;
 
                 float alpha = edgeFunction(v1Projected, v2Projected, p) * invArea;

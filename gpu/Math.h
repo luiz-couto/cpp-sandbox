@@ -6,6 +6,8 @@
 #include <algorithm>
 
 #define SQ(x) ((x) * (x))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 template<typename T>
 static T lerp(const T a, const T b, float t) {
@@ -144,11 +146,11 @@ class Vec3 {
     }
 
     float Max() const {
-        return std::max(std::max(x, y), z);
+        return max(max(x, y), z);
     }
 
     float Min() const {
-        return std::min(std::min(x, y), z);
+        return min(min(x, y), z);
     }
 };
 
@@ -158,17 +160,17 @@ float dot(const Vec3 &a, const Vec3 &b) {
 
 Vec3 Max(const Vec3 &v1, const Vec3 &v2) {
     return Vec3(
-        std::max(v1.x, v2.x),
-        std::max(v1.y, v2.y),
-        std::max(v1.z, v2.z)
+        max(v1.x, v2.x),
+        max(v1.y, v2.y),
+        max(v1.z, v2.z)
     );
 };
 
 Vec3 Min(const Vec3 &v1, const Vec3 &v2) {
     return Vec3(
-        std::min(v1.x, v2.x),
-        std::min(v1.y, v2.y),
-        std::min(v1.z, v2.z)
+        min(v1.x, v2.x),
+        min(v1.y, v2.y),
+        min(v1.z, v2.z)
     );
 };
 
@@ -310,11 +312,11 @@ class Vec4 {
     }
 
     float Max() const {
-        return std::max(std::max(x, y), std::max(z, w));
+        return max(max(x, y), max(z, w));
     }
 
     float Min() const {
-        return std::min(std::min(x, y), std::min(z, w));
+        return min(min(x, y), min(z, w));
     }
 
     Vec4 divideByW() {
@@ -328,19 +330,19 @@ class Vec4 {
 
 Vec4 Max(const Vec4 &v1, const Vec4 &v2) {
     return Vec4(
-        std::max(v1.x, v2.x),
-        std::max(v1.y, v2.y),
-        std::max(v1.z, v2.z),
-        std::max(v1.w, v2.w)
+        max(v1.x, v2.x),
+        max(v1.y, v2.y),
+        max(v1.z, v2.z),
+        max(v1.w, v2.w)
     );
 };
 
 Vec4 Min(const Vec4 &v1, const Vec4 &v2) {
     return Vec4(
-        std::min(v1.x, v2.x),
-        std::min(v1.y, v2.y),
-        std::min(v1.z, v2.z),
-        std::min(v1.w, v2.w)
+        min(v1.x, v2.x),
+        min(v1.y, v2.y),
+        min(v1.z, v2.z),
+        min(v1.w, v2.w)
     );
 };
 
@@ -811,37 +813,37 @@ class Colour {
 
     Colour operator+(const Colour &colour) const {
         return Colour(
-            std::min(r + colour.r, 255.0f), 
-            std::min(g + colour.g, 255.0f), 
-            std::min(b + colour.b, 255.0f), 
-            std::min(a + colour.a, 1.0f)
+            min(r + colour.r, 255.0f), 
+            min(g + colour.g, 255.0f), 
+            min(b + colour.b, 255.0f), 
+            min(a + colour.a, 1.0f)
         );
     }
 
     Colour operator*(const Colour &colour) const {
         return Colour(
-            std::min(r * colour.r, 255.0f), 
-            std::min(g * colour.g, 255.0f), 
-            std::min(b * colour.b, 255.0f), 
-            std::min(a * colour.a, 1.0f)
+            min(r * colour.r, 255.0f), 
+            min(g * colour.g, 255.0f), 
+            min(b * colour.b, 255.0f), 
+            min(a * colour.a, 1.0f)
         );
     }
 
     Colour operator*(const float a) const {
         return Colour(
-            std::min(r * a, 255.0f), 
-            std::min(g * a, 255.0f), 
-            std::min(b * a, 255.0f), 
-            std::min(this->a * a, 1.0f)
+            min(r * a, 255.0f), 
+            min(g * a, 255.0f), 
+            min(b * a, 255.0f), 
+            min(this->a * a, 1.0f)
         );
     }
 
     Colour operator/(const float a) const {
         return Colour(
-            std::min(r / a, 255.0f), 
-            std::min(g / a, 255.0f), 
-            std::min(b / a, 255.0f), 
-            std::min(this->a / a, 1.0f)
+            min(r / a, 255.0f), 
+            min(g / a, 255.0f), 
+            min(b / a, 255.0f), 
+            min(this->a / a, 1.0f)
         );
     }
 
