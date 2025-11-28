@@ -3,17 +3,13 @@
 #include "Math.h"
 #include "PSOManager.h"
 #include "GamesEngineeringBase.h"
-
-#include <fstream>
-#include <sstream>
+#include "ShaderManager.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 1024
 
-// CREATE A SHADER MANAGER CLASS - WITH A MAP FOR SHADERS - AVOID COMPILING THEM MORE THAN ONCE
 // Constant buffers associates with the shader - use code reflection (to get the size of the buffer from the shader itself?)
 
-// Refactor to a mesh class later
 struct PRIM_VERTEX {
     Vec3 position;
     Colour colour;
@@ -144,8 +140,7 @@ public:
     };
 
     ScreenSpaceTriangle sstriangle;
-    ID3DBlob* vertexShader;
-    ID3DBlob* pixelShader;
+    ShaderManager shaderManager;
     PSOManager psos;
 
     ConstantBuffer cb;      // your class
@@ -156,31 +151,11 @@ public:
     
     Triangle() {}
 
-    std::string readFile(const std::string& filename) {
-        std::ifstream file(filename);
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        return buffer.str();
-    }
-
     void init(Core* core) {
         sstriangle.init(core);
 
-        std::string vertexShaderStr = readFile("VertexShader.hlsl");
-        
-        std::string pixelShaderStr = readFile("PixelShaderSpinning.hlsl");
-        //std::string pixelShaderStr = readFile("PixelShaderPulsing.hlsl");
-
-        ID3DBlob* status;
-        HRESULT hr = D3DCompile(vertexShaderStr.c_str(),strlen(vertexShaderStr.c_str()), NULL, NULL, NULL, "VS", "vs_5_0", 0, 0, &vertexShader, &status);
-        if (FAILED(hr)) {
-            MessageBoxA(NULL, (char*)status->GetBufferPointer(), "Vertex Shader Compilation Error", MB_OK | MB_ICONERROR);
-        }
-
-        hr = D3DCompile(pixelShaderStr.c_str(), strlen(pixelShaderStr.c_str()), NULL, NULL, NULL, "PS", "ps_5_0", 0, 0, &pixelShader, &status);
-        if (FAILED(hr)) {
-            MessageBoxA(NULL, (char*)status->GetBufferPointer(), "Pixel Shader Compilation Error", MB_OK | MB_ICONERROR);
-        }
+        ID3DBlob* vertexShader = shaderManager.getVertexShader("VertexShader.hlsl");
+        ID3DBlob* pixelShader = shaderManager.getPixelShader("PixelShaderSpinning.hlsl");
 
         psos.createPSO(core, "Triangle", vertexShader, pixelShader, sstriangle.inputLayoutDesc);
 
