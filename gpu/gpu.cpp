@@ -7,6 +7,9 @@
 #include <fstream>
 #include <sstream>
 
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 1024
+
 // CREATE A SHADER MANAGER CLASS - WITH A MAP FOR SHADERS - AVOID COMPILING THEM MORE THAN ONCE
 // Constant buffers associates with the shader - use code reflection (to get the size of the buffer from the shader itself?)
 
@@ -130,8 +133,14 @@ class ConstantBuffer {
 
 class Triangle {
 public:
-    struct alignas(16) TriangleCB {
+    struct alignas(16) TrianglePulsingCB {
         float time;
+    };
+
+    struct alignas(16) TriangleLightsCB {
+        float time;
+        float padding[3];
+        Vec4 lights[4];
     };
 
     ScreenSpaceTriangle sstriangle;
@@ -140,7 +149,8 @@ public:
     PSOManager psos;
 
     ConstantBuffer cb;      // your class
-    TriangleCB cbData;      // CPU data
+    TrianglePulsingCB cbData;      // CPU data
+    TriangleLightsCB cbLightsData;  // CPU data
 
     GamesEngineeringBase::Timer timer = GamesEngineeringBase::Timer();
     
@@ -157,7 +167,9 @@ public:
         sstriangle.init(core);
 
         std::string vertexShaderStr = readFile("VertexShader.hlsl");
-        std::string pixelShaderStr = readFile("PixelShader.hlsl");
+        
+        std::string pixelShaderStr = readFile("PixelShaderSpinning.hlsl");
+        //std::string pixelShaderStr = readFile("PixelShaderPulsing.hlsl");
 
         ID3DBlob* status;
         HRESULT hr = D3DCompile(vertexShaderStr.c_str(),strlen(vertexShaderStr.c_str()), NULL, NULL, NULL, "VS", "vs_5_0", 0, 0, &vertexShader, &status);
@@ -173,16 +185,31 @@ public:
         psos.createPSO(core, "Triangle", vertexShader, pixelShader, sstriangle.inputLayoutDesc);
 
         cbData.time = 0.0f;
-        cb.init(core, sizeof(TriangleCB), core->swapchainBufferCount());
+        cbLightsData.time = 0.0f;
+        
+        cb.init(core, sizeof(TriangleLightsCB), core->swapchainBufferCount());
+        //cb.init(core, sizeof(TrianglePulsingCB), core->swapchainBufferCount());
 
     }
 
     void draw(Core* core) {
         core->beginRenderPass();
 
-        cbData.time += timer.dt();   // from timer
+        float dt = timer.dt();
+        //cbData.time += dt;
 
-        cb.update(&cbData, sizeof(cbData), core->frameIndex());
+        cbLightsData.time += dt;
+        for (int i = 0; i < 4; i++) {
+            float angle = cbLightsData.time + (i * M_PI / 2.0f);
+            cbLightsData.lights[i] = Vec4(
+                WINDOW_WIDTH / 2.0f + (cosf(angle) * (WINDOW_WIDTH * 0.3f)),
+                WINDOW_HEIGHT / 2.0f + (sinf(angle) * (WINDOW_HEIGHT * 0.3f)),
+                0,
+                0
+            );
+        }
+
+        cb.update(&cbLightsData, sizeof(cbLightsData), core->frameIndex());
         core->getCommandList()->SetGraphicsRootConstantBufferView(1, cb.getGPUAddress(core->frameIndex()));
 
         psos.bind(core, "Triangle");
@@ -191,13 +218,10 @@ public:
     }
 };
 
-
-
-
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
     Window win;
     Core core;
-    win.init(1024, 1024, 0, 0, "My Window");
+    win.init(WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0, "My Window");
     core.init(win.hwnd, win.windowWidth, win.windowHeight);
     Triangle triangle;
     triangle.init(&core);
