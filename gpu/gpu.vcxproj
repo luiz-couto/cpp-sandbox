@@ -132,6 +132,7 @@
     <ClInclude Include="Barrier.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="Fence.h" />
+    <ClInclude Include="GamesEngineeringBase.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="PSOManager.h" />
     <ClInclude Include="Window.h" />

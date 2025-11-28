@@ -65,12 +65,20 @@ public:
 
         ID3D12PipelineState* pso;
         HRESULT hr = core->device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso));
+        if (FAILED(hr)) {
+            MessageBoxA(NULL, ("Failed to create PSO: " + name + "\n").c_str(), "Error", MB_OK | MB_ICONERROR);
+            return;
+        }
 
         psos.insert({ name, pso });
     }
 
     void bind(Core* core, std::string name) {
-        // later need to check if name exists
+        auto it = psos.find(name);
+        if (it == psos.end() || it->second == nullptr) {
+            MessageBoxA(NULL, ("ERROR: PSO '" + name + "' not found or null!\n").c_str(), "Error", MB_OK | MB_ICONERROR);
+            return;
+        }
 
         core->getCommandList()->SetPipelineState(psos[name]);
     }

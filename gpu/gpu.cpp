@@ -2,9 +2,13 @@
 #include "Core.h"
 #include "Math.h"
 #include "PSOManager.h"
+#include "GamesEngineeringBase.h"
 
 #include <fstream>
 #include <sstream>
+
+// CREATE A SHADER MANAGER CLASS - WITH A MAP FOR SHADERS - AVOID COMPILING THEM MORE THAN ONCE
+// Constant buffers associates with the shader - use code reflection (to get the size of the buffer from the shader itself?)
 
 // Refactor to a mesh class later
 struct PRIM_VERTEX {
@@ -87,12 +91,58 @@ class ScreenSpaceTriangle {
     }
 };
 
+class ConstantBuffer {
+    public:
+    ID3D12Resource* constantBuffer;
+    unsigned char* buffer;
+    unsigned int cbSizeInBytes;
+
+    void init(Core* core, unsigned int sizeInBytes, int frames) {
+        cbSizeInBytes = (sizeInBytes + 255) & ~255;
+        HRESULT hr;
+        D3D12_HEAP_PROPERTIES heapprops = {};
+        heapprops.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapprops.CreationNodeMask = 1;
+        heapprops.VisibleNodeMask = 1;
+        D3D12_RESOURCE_DESC cbDesc = {};
+        cbDesc.Width = cbSizeInBytes * frames;
+        cbDesc.Height = 1;
+        cbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        cbDesc.DepthOrArraySize = 1;
+        cbDesc.MipLevels = 1;
+        cbDesc.SampleDesc.Count = 1;
+        cbDesc.SampleDesc.Quality = 0;
+        cbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        hr = core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &cbDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ, NULL, __uuidof(ID3D12Resource), (void**)&constantBuffer);
+        hr = constantBuffer->Map(0, NULL, (void**)&buffer);
+    }
+
+    void update(void* data, unsigned int sizeInBytes, int frame) {
+        memcpy(buffer + (frame * cbSizeInBytes), data, sizeInBytes);
+    }
+
+    D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress(int frame) {
+        return (constantBuffer->GetGPUVirtualAddress() + (frame * cbSizeInBytes));
+    }
+
+};
+
 class Triangle {
 public:
+    struct alignas(16) TriangleCB {
+        float time;
+    };
+
     ScreenSpaceTriangle sstriangle;
     ID3DBlob* vertexShader;
     ID3DBlob* pixelShader;
     PSOManager psos;
+
+    ConstantBuffer cb;      // your class
+    TriangleCB cbData;      // CPU data
+
+    GamesEngineeringBase::Timer timer = GamesEngineeringBase::Timer();
     
     Triangle() {}
 
@@ -111,24 +161,38 @@ public:
 
         ID3DBlob* status;
         HRESULT hr = D3DCompile(vertexShaderStr.c_str(),strlen(vertexShaderStr.c_str()), NULL, NULL, NULL, "VS", "vs_5_0", 0, 0, &vertexShader, &status);
-        hr = D3DCompile(pixelShaderStr.c_str(), strlen(pixelShaderStr.c_str()), NULL, NULL, NULL, "PS", "ps_5_0", 0, 0, &pixelShader, &status);
-
         if (FAILED(hr)) {
-            // Output the error message
-            // (char*)status->GetBufferPointer()
-            MessageBoxA(NULL, (char*)status->GetBufferPointer(), "Shader Compilation Error", MB_OK | MB_ICONERROR);
+            MessageBoxA(NULL, (char*)status->GetBufferPointer(), "Vertex Shader Compilation Error", MB_OK | MB_ICONERROR);
+        }
+
+        hr = D3DCompile(pixelShaderStr.c_str(), strlen(pixelShaderStr.c_str()), NULL, NULL, NULL, "PS", "ps_5_0", 0, 0, &pixelShader, &status);
+        if (FAILED(hr)) {
+            MessageBoxA(NULL, (char*)status->GetBufferPointer(), "Pixel Shader Compilation Error", MB_OK | MB_ICONERROR);
         }
 
         psos.createPSO(core, "Triangle", vertexShader, pixelShader, sstriangle.inputLayoutDesc);
+
+        cbData.time = 0.0f;
+        cb.init(core, sizeof(TriangleCB), core->swapchainBufferCount());
 
     }
 
     void draw(Core* core) {
         core->beginRenderPass();
+
+        cbData.time += timer.dt();   // from timer
+
+        cb.update(&cbData, sizeof(cbData), core->frameIndex());
+        core->getCommandList()->SetGraphicsRootConstantBufferView(1, cb.getGPUAddress(core->frameIndex()));
+
         psos.bind(core, "Triangle");
+
         sstriangle.mesh.draw(core);
     }
 };
+
+
+
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
     Window win;
@@ -139,7 +203,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     triangle.init(&core);
 
     while (true) {
-        core.resetCommandList();
         core.beginFrame();
         win.processMessages();
         if (win.keys[VK_ESCAPE] == 1) {

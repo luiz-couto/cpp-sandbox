@@ -90,6 +90,15 @@ public:
         swapChain1->Release();
     }
 
+    int frameIndex() {
+        return swapchain->GetCurrentBackBufferIndex();
+    }
+
+    int swapchainBufferCount() {
+        //return swapchain->GetDesc1()->BufferCount;
+        return 2;
+    }
+
     // finds the adapter with bigger maxVideoMemory and uses it
     // creates the device
     // creates the 3 command queues: graphics, copy and compute
@@ -200,13 +209,31 @@ public:
         scissorRect.right = wWidth;
         scissorRect.bottom = wHeight;
 
+        std::vector<D3D12_ROOT_PARAMETER> parameters;
+        D3D12_ROOT_PARAMETER rootParameterCBVS;
+        rootParameterCBVS.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameterCBVS.Descriptor.ShaderRegister = 0; // Register(b0)
+        rootParameterCBVS.Descriptor.RegisterSpace = 0;
+        rootParameterCBVS.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        parameters.push_back(rootParameterCBVS);
+
+        D3D12_ROOT_PARAMETER rootParameterCBPS;
+        rootParameterCBPS.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        rootParameterCBPS.Descriptor.ShaderRegister = 0; // Register(b0)
+        rootParameterCBPS.Descriptor.RegisterSpace = 0;
+        rootParameterCBPS.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        parameters.push_back(rootParameterCBPS);
+
         D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters = parameters.size();
+        desc.pParameters = &parameters[0];
         desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         ID3DBlob* serialized;
         ID3DBlob* error;
         D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &serialized, &error);
         device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
         serialized->Release();
+        
     }
 
     void resetCommandList() {
@@ -240,6 +267,8 @@ public:
         D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle = backbufferHeap->GetCPUDescriptorHandleForHeapStart();
         unsigned int renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         renderTargetViewHandle.ptr += frameIndex * renderTargetViewDescriptorSize;
+
+        resetCommandList();
 
         Barrier::add(backbuffers[frameIndex], D3D12_RESOURCE_STATE_PRESENT,
         D3D12_RESOURCE_STATE_RENDER_TARGET, getCommandList());
