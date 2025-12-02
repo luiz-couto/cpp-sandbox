@@ -114,12 +114,17 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         time += dt;
         time = fmodf(time, 2 * 3.1415f); // Avoid precision issues
 
-        Vec3 from = Vec3(20 * cos(time), 5, 20 * sinf(time));
+        Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
         camera.from = from;
         viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
-        vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
+        vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
         cube.draw(&core, &vsCBStaticModel);
+
+        vsCBStaticModel.W.setTranslation(5, 0, 0);
+        cube.draw(&core, &vsCBStaticModel);
+
+        vsCBStaticModel.W.setTranslation(0, 0, 0);
         core.finishFrame();
     }
 
