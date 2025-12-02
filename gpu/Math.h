@@ -532,39 +532,36 @@ class Matrix {
     }
 
 
-    void setProjectionMatrix(float zFar, float zNear, float fovTheta, float width, float height) {
+    void setProjectionMatrix(float zFar, float zNear, float fovDeg, float width, float height) {
         setIdentity();
-        float aspect = width / height;
-        float tanFOV = tan(fovTheta / 2);
 
-        m[0] = 1 / (aspect * tanFOV);
-        m[5] = 1 / tanFOV;
+        float aspect = width / height;
+        float fovRad = fovDeg * 0.01745329251f;
+        float yScale = 1.0f / tanf(fovRad * 0.5f);
+        float xScale = yScale / aspect;
+
+        m[0]  = xScale;
+        m[5]  = yScale;
+
         m[10] = zFar / (zFar - zNear);
-        m[11] = (- (zFar * zNear)) / (zFar - zNear);
-        m[14] = 1;
-        m[15] = 0;
+        m[14] = 1.0f;
+        m[11] = (-zNear * zFar) / (zFar - zNear);
+        m[15] = 0.0f;
     }
 
     void setLookatMatrix(const Vec3 &from, const Vec3 &to, const Vec3 &up) {
         setIdentity();
-        Vec3 dir = (to - from) / ((to - from).length());
-        Vec3 right = up.cross(dir);
-        Vec3 upLine = dir.cross(right);
+        Vec3 z = (to - from).normalize();
+        Vec3 x = up.cross(z).normalize();
+        Vec3 y = z.cross(x);
 
-        m[0] = right.x;
-        m[1] = right.y;
-        m[2] = right.z;
-        m[3] = (-from).dot(right);
+        m[0] = x.x;  m[1] = x.y;  m[2] = x.z;
+        m[4] = y.x;  m[5] = y.y;  m[6] = y.z;
+        m[8] = z.x;  m[9] = z.y;  m[10] = z.z;
 
-        m[4] = upLine.x;
-        m[5] = upLine.y;
-        m[6] = upLine.z;
-        m[7] = (-from).dot(upLine);
-
-        m[8] = dir.x;
-        m[9] = dir.y;
-        m[10] = dir.z;
-        m[11] = (-from).dot(dir);
+        m[3]  = -from.dot(x);
+        m[7]  = -from.dot(y);
+        m[11] = -from.dot(z);
     }
 
 };

@@ -130,12 +130,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Barrier.h" />
+    <ClInclude Include="ConstantBufferReflection.h" />
     <ClInclude Include="Core.h" />
+    <ClInclude Include="Cube.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="GamesEngineeringBase.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="PSOManager.h" />
     <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="Sphere.h" />
+    <ClInclude Include="Vertex.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
