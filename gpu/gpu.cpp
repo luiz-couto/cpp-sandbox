@@ -54,46 +54,25 @@ public:
 
         Shader* vertexShaderBlob = shaderManager->getVertexShader("VertexShader.hlsl", vsCB);
         Shader* pixelShaderBlob = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
-        MessageBoxA(NULL, pixelShaderBlob->shaderBlob ? "PS has blob" : "PS is NULL", "Check", 0);
-        MessageBoxA(NULL, ("PS blob size = " + std::to_string(pixelShaderBlob->shaderBlob->GetBufferSize())).c_str(), 0, MB_OK);
         psos.createPSO(core, "Plane", vertexShaderBlob->shaderBlob, pixelShaderBlob->shaderBlob, vertexLayoutCache.getStaticLayout());
     }
 
-    void draw(Core* core, VertexShaderCBStaticModel *vsCB) {   
+    void draw(Core* core, VertexShaderCBStaticModel *vsCB) {
         core->beginRenderPass();
 
-        // Update VS/PS constant buffers
-        //shaderManager->updateConstantVS("VertexShader.hlsl", "W", &vsCB->W);
-        //shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
-
-        shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
-        //Shader* pixelShader = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
-        //core->getCommandList()->SetGraphicsRootConstantBufferView(0, vertexShader->constantBufferReflection->getGPUAddress());
-
-
-        // Apply PSO (bind VS+PS)
+        // 1. Bind PSO FIRST
         psos.bind(core, "Plane");
 
-        // Draw geometry
+        // 2. Update constant buffer values
+        shaderManager->updateConstantVS("VertexShader.hlsl", "W",  &vsCB->W);
+        shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
+
+        // 3. Apply vertex shader (binds CBV)
+        shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
+
+        // 4. Draw
         mesh.draw(core);
     }
-
-    // void draw(Core* core, VertexShaderCBStaticModel *vsCB) {
-    //     core->beginRenderPass();
-
-    //     // 1. Bind PSO FIRST
-    //     psos.bind(core, "Plane");
-
-    //     // 2. Update constant buffer values
-    //     shaderManager->updateConstantVS("VertexShader.hlsl", "W",  &vsCB->W);
-    //     shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
-
-    //     // 3. Apply vertex shader (binds CBV)
-    //     shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
-
-    //     // 4. Draw
-    //     mesh.draw(core);
-    // }
 
 };
 
@@ -103,7 +82,7 @@ class Camera {
     Vec3 to;
     Vec3 up;
 
-    Camera() : from(0, 5.0f, 11.0f), to(0, 1, 0), up(0, 1, 0) {}
+    Camera() : from(11.0f, 5.0f, 40.0f), to(0, 1, 0), up(0, 1, 0) {}
     Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
 };
 
@@ -164,7 +143,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     //     ).c_str(),
     //     "Info", MB_OK | MB_ICONINFORMATION);
 
-    vsCBStaticModel.VP = (viewMatrix.mul(projectionMatrix));
+    vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
     // print VP matrix
     // MessageBoxA(NULL,
