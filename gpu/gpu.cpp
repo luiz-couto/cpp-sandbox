@@ -158,12 +158,24 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
     plane.init(&core, &vsCBStaticModel);
 
+    GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
+    float time = 0.0f;
+
     while (true) {
         core.beginFrame();
         win.processMessages();
         if (win.keys[VK_ESCAPE] == 1) {
             break;
         }
+
+        float dt = tim.dt();
+        time += dt;
+        time = fmodf(time, 2 * 3.1415f); // Avoid precision issues
+
+        Vec3 from = Vec3(60 * cos(time), 25, 60 * sinf(time));
+        camera.from = from;
+        viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
+        vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
         plane.draw(&core, &vsCBStaticModel);
         core.finishFrame();
