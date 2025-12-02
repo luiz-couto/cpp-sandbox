@@ -5,7 +5,9 @@ cbuffer bufferName {
 
 struct PS_INPUT {
     float4 Pos : SV_POSITION;
-    float3 Colour : COLOUR;
+    float3 Normal : NORMAL;
+    float3 Tangent : TANGENT;
+    float2 TexCoords : TEXCOORD;
 };
 
 float dist(float2 screenspace_pos, float2 light) {

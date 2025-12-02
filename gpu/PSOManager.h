@@ -17,6 +17,7 @@ public:
         desc.InputLayout = layout;
         desc.pRootSignature = core->rootSignature;
         desc.VS = { vs->GetBufferPointer(), vs->GetBufferSize() };
+        MessageBoxA(NULL, ps->GetBufferPointer() ? "PS OK" : "PS NULL", "Check", MB_OK);
         desc.PS = { ps->GetBufferPointer(), ps->GetBufferSize() };
 
         // rasterizer: how to draw the triangles

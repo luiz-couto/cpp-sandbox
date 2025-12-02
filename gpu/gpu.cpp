@@ -4,202 +4,180 @@
 #include "PSOManager.h"
 #include "GamesEngineeringBase.h"
 #include "ShaderManager.h"
+#include "Mesh.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 1024
 
 // Constant buffers associates with the shader - use code reflection (to get the size of the buffer from the shader itself?)
+// Pipeline Manager to access many strcuts
 
 struct PRIM_VERTEX {
     Vec3 position;
     Colour colour;
 };
 
-// What to draw
-class Mesh {
-    public:
-    ID3D12Resource* vertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW vbView;
-
-    Mesh(){}
-
-    void init(Core* core, void* vertices, int vertexSizeInBytes, int numVertices) {
-        D3D12_HEAP_PROPERTIES heapprops = {};
-        heapprops.Type = D3D12_HEAP_TYPE_DEFAULT;
-        heapprops.CreationNodeMask = 1;
-        heapprops.VisibleNodeMask = 1;
-
-        D3D12_RESOURCE_DESC vbDesc = {};
-        vbDesc.Width = numVertices * vertexSizeInBytes;
-        vbDesc.Height = 1;
-        vbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        vbDesc.DepthOrArraySize = 1;
-        vbDesc.MipLevels = 1;
-        vbDesc.SampleDesc.Count = 1;
-        vbDesc.SampleDesc.Quality = 0;
-        vbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &vbDesc,
-        D3D12_RESOURCE_STATE_COMMON, NULL, IID_PPV_ARGS(&vertexBuffer));
-
-        core->uploadResource(vertexBuffer, vertices, numVertices * vertexSizeInBytes, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        
-        vbView.BufferLocation = vertexBuffer->GetGPUVirtualAddress(); // point where the buffer is located in GPU memory
-        vbView.StrideInBytes = vertexSizeInBytes; // size of each vertex. Everytime we step forward in the buffer, we move by this size
-        vbView.SizeInBytes = numVertices * vertexSizeInBytes;
-
-    }
-
-    void draw(Core* core) {
-        core->getCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        core->getCommandList()->IASetVertexBuffers(0, 1, &vbView);
-        core->getCommandList()->DrawInstanced(3, 1, 0, 0);
-    }
-
+struct VertexShaderCBStaticModel {
+    Matrix W;
+    Matrix VP;
 };
 
-// What to draw
-class ScreenSpaceTriangle {
-    public:
-    PRIM_VERTEX vertices[3];
-    Mesh mesh;
+STATIC_VERTEX addVertex(Vec3 p, Vec3 n, float tu, float tv) {
+    STATIC_VERTEX v;
+    v.pos = p;
+    v.normal = n;
+    v.tangent = Vec3(0, 0, 0); // For now
+    v.tu = tu;
+    v.tv = tv;
+    return v;
+}
 
-    // We may want to share this between multiple meshes later. Like a storage of Layouts. A new class
-    D3D12_INPUT_ELEMENT_DESC inputLayout[2];
-    D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
-
-    ScreenSpaceTriangle() {}
-
-    void init(Core* core) {
-        PRIM_VERTEX vertices[3];
-        vertices[0].position = Vec3(0, 1.0f, 0);
-        vertices[0].colour = Colour(0, 1.0f, 0);
-        vertices[1].position = Vec3(-1.0f, -1.0f, 0);
-        vertices[1].colour = Colour(1.0f, 0, 0);
-        vertices[2].position = Vec3(1.0f, -1.0f, 0);
-        vertices[2].colour = Colour(0, 0, 1.0f);
-
-        mesh.init(core, &vertices[0], sizeof(PRIM_VERTEX), 3);
-
-        // The names are used after in the shader to link the vertex data to the shader inputs
-        inputLayout[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-        D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-        inputLayout[1] = { "COLOUR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-        D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-        inputLayoutDesc.NumElements = 2;
-        inputLayoutDesc.pInputElementDescs = inputLayout;
-    }
-};
-
-class ConstantBuffer {
-    public:
-    ID3D12Resource* constantBuffer;
-    unsigned char* buffer;
-    unsigned int cbSizeInBytes;
-
-    void init(Core* core, unsigned int sizeInBytes, int frames) {
-        cbSizeInBytes = (sizeInBytes + 255) & ~255;
-        HRESULT hr;
-        D3D12_HEAP_PROPERTIES heapprops = {};
-        heapprops.Type = D3D12_HEAP_TYPE_UPLOAD;
-        heapprops.CreationNodeMask = 1;
-        heapprops.VisibleNodeMask = 1;
-        D3D12_RESOURCE_DESC cbDesc = {};
-        cbDesc.Width = cbSizeInBytes * frames;
-        cbDesc.Height = 1;
-        cbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        cbDesc.DepthOrArraySize = 1;
-        cbDesc.MipLevels = 1;
-        cbDesc.SampleDesc.Count = 1;
-        cbDesc.SampleDesc.Quality = 0;
-        cbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        hr = core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &cbDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ, NULL, __uuidof(ID3D12Resource), (void**)&constantBuffer);
-        hr = constantBuffer->Map(0, NULL, (void**)&buffer);
-    }
-
-    void update(void* data, unsigned int sizeInBytes, int frame) {
-        memcpy(buffer + (frame * cbSizeInBytes), data, sizeInBytes);
-    }
-
-    D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress(int frame) {
-        return (constantBuffer->GetGPUVirtualAddress() + (frame * cbSizeInBytes));
-    }
-
-};
-
-class Triangle {
+class Plane {
 public:
-    struct alignas(16) TrianglePulsingCB {
-        float time;
-    };
-
-    struct alignas(16) TriangleLightsCB {
-        float time;
-        float padding[3];
-        Vec4 lights[4];
-    };
-
-    ScreenSpaceTriangle sstriangle;
-    ShaderManager shaderManager;
+    Mesh mesh;
+    ShaderManager* shaderManager;
     PSOManager psos;
+    VertexLayoutCache vertexLayoutCache;
 
-    ConstantBuffer cb;      // your class
-    TrianglePulsingCB cbData;      // CPU data
-    TriangleLightsCB cbLightsData;  // CPU data
+    Plane(ShaderManager* sm) : shaderManager(sm) {}
 
-    GamesEngineeringBase::Timer timer = GamesEngineeringBase::Timer();
-    
-    Triangle() {}
+    void init(Core* core, VertexShaderCBStaticModel *vsCB) {
+        // Build geometry
+        std::vector<STATIC_VERTEX> vertices;
+        vertices.push_back(addVertex(Vec3(-15, 0, -15), Vec3(0, 1, 0), 0, 0));
+        vertices.push_back(addVertex(Vec3( 15, 0, -15), Vec3(0, 1, 0), 1, 0));
+        vertices.push_back(addVertex(Vec3(-15, 0,  15), Vec3(0, 1, 0), 0, 1));
+        vertices.push_back(addVertex(Vec3( 15, 0,  15), Vec3(0, 1, 0), 1, 1));
 
-    void init(Core* core) {
-        sstriangle.init(core);
+        std::vector<unsigned int> indices = { 2, 1, 0,  1, 2, 3 };
+        mesh.initFromVec(core, vertices, indices);
 
-        ID3DBlob* vertexShader = shaderManager.getVertexShader("VertexShader.hlsl");
-        ID3DBlob* pixelShader = shaderManager.getPixelShader("PixelShaderSpinning.hlsl");
-
-        psos.createPSO(core, "Triangle", vertexShader, pixelShader, sstriangle.inputLayoutDesc);
-
-        cbData.time = 0.0f;
-        cbLightsData.time = 0.0f;
-        
-        cb.init(core, sizeof(TriangleLightsCB), core->swapchainBufferCount());
-        //cb.init(core, sizeof(TrianglePulsingCB), core->swapchainBufferCount());
-
+        Shader* vertexShaderBlob = shaderManager->getVertexShader("VertexShader.hlsl", vsCB);
+        Shader* pixelShaderBlob = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
+        MessageBoxA(NULL, pixelShaderBlob->shaderBlob ? "PS has blob" : "PS is NULL", "Check", 0);
+        MessageBoxA(NULL, ("PS blob size = " + std::to_string(pixelShaderBlob->shaderBlob->GetBufferSize())).c_str(), 0, MB_OK);
+        psos.createPSO(core, "Plane", vertexShaderBlob->shaderBlob, pixelShaderBlob->shaderBlob, vertexLayoutCache.getStaticLayout());
     }
 
-    void draw(Core* core) {
+    void draw(Core* core, VertexShaderCBStaticModel *vsCB) {   
         core->beginRenderPass();
 
-        float dt = timer.dt();
-        //cbData.time += dt;
+        // Update VS/PS constant buffers
+        //shaderManager->updateConstantVS("VertexShader.hlsl", "W", &vsCB->W);
+        //shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
 
-        cbLightsData.time += dt;
-        for (int i = 0; i < 4; i++) {
-            float angle = cbLightsData.time + (i * M_PI / 2.0f);
-            cbLightsData.lights[i] = Vec4(
-                WINDOW_WIDTH / 2.0f + (cosf(angle) * (WINDOW_WIDTH * 0.3f)),
-                WINDOW_HEIGHT / 2.0f + (sinf(angle) * (WINDOW_HEIGHT * 0.3f)),
-                0,
-                0
-            );
-        }
+        shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
+        //Shader* pixelShader = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
+        //core->getCommandList()->SetGraphicsRootConstantBufferView(0, vertexShader->constantBufferReflection->getGPUAddress());
 
-        cb.update(&cbLightsData, sizeof(cbLightsData), core->frameIndex());
-        core->getCommandList()->SetGraphicsRootConstantBufferView(1, cb.getGPUAddress(core->frameIndex()));
 
-        psos.bind(core, "Triangle");
+        // Apply PSO (bind VS+PS)
+        psos.bind(core, "Plane");
 
-        sstriangle.mesh.draw(core);
+        // Draw geometry
+        mesh.draw(core);
     }
+
+    // void draw(Core* core, VertexShaderCBStaticModel *vsCB) {
+    //     core->beginRenderPass();
+
+    //     // 1. Bind PSO FIRST
+    //     psos.bind(core, "Plane");
+
+    //     // 2. Update constant buffer values
+    //     shaderManager->updateConstantVS("VertexShader.hlsl", "W",  &vsCB->W);
+    //     shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
+
+    //     // 3. Apply vertex shader (binds CBV)
+    //     shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
+
+    //     // 4. Draw
+    //     mesh.draw(core);
+    // }
+
+};
+
+class Camera {
+    public:
+    Vec3 from;
+    Vec3 to;
+    Vec3 up;
+
+    Camera() : from(0, 5.0f, 11.0f), to(0, 1, 0), up(0, 1, 0) {}
+    Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
 };
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
     Window win;
-    Core core;
     win.init(WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0, "My Window");
+
+    Core core;
     core.init(win.hwnd, win.windowWidth, win.windowHeight);
-    Triangle triangle;
-    triangle.init(&core);
+    
+    ShaderManager* shaderManager = new ShaderManager(&core);
+    Camera camera;
+    
+    Matrix viewMatrix;
+    viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
+
+    // print LookAt matrix
+    // MessageBoxA(NULL, 
+    //     ("View Matrix:\n" +
+    //     std::to_string(viewMatrix.m[0]) + " " + std::to_string(viewMatrix.m[1]) + " " + std::to_string(viewMatrix.m[2]) + " " + std::to_string(viewMatrix.m[3]) + "\n" +
+    //     std::to_string(viewMatrix.m[4]) + " " + std::to_string(viewMatrix.m[5]) + " " + std::to_string(viewMatrix.m[6]) + " " + std::to_string(viewMatrix.m[7]) + "\n" +
+    //     std::to_string(viewMatrix.m[8]) + " " + std::to_string(viewMatrix.m[9]) + " " + std::to_string(viewMatrix.m[10]) + " " + std::to_string(viewMatrix.m[11]) + "\n" +
+    //     std::to_string(viewMatrix.m[12]) + " " + std::to_string(viewMatrix.m[13]) + " " + std::to_string(viewMatrix.m[14]) + " " + std::to_string(viewMatrix.m[15]) + "\n"
+    //     ).c_str(),
+    //     "Info", MB_OK | MB_ICONINFORMATION);
+
+    Matrix projectionMatrix;
+    float zFar = 1000.0f;
+    float zNear = 0.01f;
+    float FOV = 45.0f;
+    projectionMatrix.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    // print Projection matrix
+    // MessageBoxA(NULL, 
+    //     ("Projection Matrix:\n" +
+    //     std::to_string(projectionMatrix.m[0]) + " " + std::to_string(projectionMatrix.m[1]) + " " + std::to_string(projectionMatrix.m[2]) + " " + std::to_string(projectionMatrix.m[3]) + "\n" +
+    //     std::to_string(projectionMatrix.m[4]) + " " + std::to_string(projectionMatrix.m[5]) + " " + std::to_string(projectionMatrix.m[6]) + " " + std::to_string(projectionMatrix.m[7]) + "\n" +
+    //     std::to_string(projectionMatrix.m[8]) + " " + std::to_string(projectionMatrix.m[9]) + " " + std::to_string(projectionMatrix.m[10]) + " " + std::to_string(projectionMatrix.m[11]) + "\n" +
+    //     std::to_string(projectionMatrix.m[12]) + " " + std::to_string(projectionMatrix.m[13]) + " " + std::to_string(projectionMatrix.m[14]) + " " + std::to_string(projectionMatrix.m[15]) + "\n"
+    //     ).c_str(),
+    //     "Info", MB_OK | MB_ICONINFORMATION);
+    
+    Matrix WorldMatrix;
+    WorldMatrix.setIdentity();
+
+    Plane plane(shaderManager);
+    VertexShaderCBStaticModel vsCBStaticModel;
+
+    vsCBStaticModel.W = WorldMatrix;
+
+    // print World matrix
+    // MessageBoxA(NULL, 
+    //     ("World Matrix:\n" +
+    //     std::to_string(vsCBStaticModel.W.m[0]) + " " + std::to_string(vsCBStaticModel.W.m[1]) + " " + std::to_string(vsCBStaticModel.W.m[2]) + " " + std::to_string(vsCBStaticModel.W.m[3]) + "\n" +
+    //     std::to_string(vsCBStaticModel.W.m[4]) + " " + std::to_string(vsCBStaticModel.W.m[5]) + " " + std::to_string(vsCBStaticModel.W.m[6]) + " " + std::to_string(vsCBStaticModel.W.m[7]) + "\n" +
+    //     std::to_string(vsCBStaticModel.W.m[8]) + " " + std::to_string(vsCBStaticModel.W.m[9]) + " " + std::to_string(vsCBStaticModel.W.m[10]) + " " + std::to_string(vsCBStaticModel.W.m[11]) + "\n" +
+    //     std::to_string(vsCBStaticModel.W.m[12]) + " " + std::to_string(vsCBStaticModel.W.m[13]) + " " + std::to_string(vsCBStaticModel.W.m[14]) + " " + std::to_string(vsCBStaticModel.W.m[15]) + "\n"
+    //     ).c_str(),
+    //     "Info", MB_OK | MB_ICONINFORMATION);
+
+    vsCBStaticModel.VP = (viewMatrix.mul(projectionMatrix));
+
+    // print VP matrix
+    // MessageBoxA(NULL,
+    //     ("VP Matrix:\n" +
+    //     std::to_string(vsCBStaticModel.VP.m[0]) + " " + std::to_string(vsCBStaticModel.VP.m[1]) + " " + std::to_string(vsCBStaticModel.VP.m[2]) + " " + std::to_string(vsCBStaticModel.VP.m[3]) + "\n" +
+    //     std::to_string(vsCBStaticModel.VP.m[4]) + " " + std::to_string(vsCBStaticModel.VP.m[5]) + " " + std::to_string(vsCBStaticModel.VP.m[6]) + " " + std::to_string(vsCBStaticModel.VP.m[7]) + "\n" +
+    //     std::to_string(vsCBStaticModel.VP.m[8]) + " " + std::to_string(vsCBStaticModel.VP.m[9]) + " " + std::to_string(vsCBStaticModel.VP.m[10]) + " " + std::to_string(vsCBStaticModel.VP.m[11]) + "\n" +
+    //     std::to_string(vsCBStaticModel.VP.m[12]) + " " + std::to_string(vsCBStaticModel.VP.m[13]) + " " + std::to_string(vsCBStaticModel.VP.m[14]) + " " + std::to_string(vsCBStaticModel.VP.m[15]) + "\n"
+    //     ).c_str(),
+    //     "Info", MB_OK | MB_ICONINFORMATION);
+
+
+    plane.init(&core, &vsCBStaticModel);
 
     while (true) {
         core.beginFrame();
@@ -207,7 +185,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         if (win.keys[VK_ESCAPE] == 1) {
             break;
         }
-        triangle.draw(&core);
+
+        plane.draw(&core, &vsCBStaticModel);
         core.finishFrame();
     }
 
