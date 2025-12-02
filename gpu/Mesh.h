@@ -12,6 +12,26 @@ struct STATIC_VERTEX {
     float tv;
 };
 
+struct PRIM_VERTEX {
+    Vec3 position;
+    Colour colour;
+};
+
+struct VertexShaderCBStaticModel {
+    Matrix W;
+    Matrix VP;
+};
+
+STATIC_VERTEX addVertex(Vec3 p, Vec3 n, float tu, float tv) {
+    STATIC_VERTEX v;
+    v.pos = p;
+    v.normal = n;
+    v.tangent = Vec3(0, 0, 0); // For now
+    v.tu = tu;
+    v.tv = tv;
+    return v;
+}
+
 class VertexLayoutCache {
     public:
     static const D3D12_INPUT_LAYOUT_DESC& getStaticLayout() {

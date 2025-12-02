@@ -5,32 +5,14 @@
 #include "GamesEngineeringBase.h"
 #include "ShaderManager.h"
 #include "Mesh.h"
+#include "Cube.h"
+#include "Sphere.h"
 
 #define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 1024
+#define WINDOW_HEIGHT 768
 
 // Constant buffers associates with the shader - use code reflection (to get the size of the buffer from the shader itself?)
 // Pipeline Manager to access many strcuts
-
-struct PRIM_VERTEX {
-    Vec3 position;
-    Colour colour;
-};
-
-struct VertexShaderCBStaticModel {
-    Matrix W;
-    Matrix VP;
-};
-
-STATIC_VERTEX addVertex(Vec3 p, Vec3 n, float tu, float tv) {
-    STATIC_VERTEX v;
-    v.pos = p;
-    v.normal = n;
-    v.tangent = Vec3(0, 0, 0); // For now
-    v.tu = tu;
-    v.tv = tv;
-    return v;
-}
 
 class Plane {
 public:
@@ -88,7 +70,7 @@ class Camera {
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
     Window win;
-    win.init(WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0, "My Window");
+    win.init(WINDOW_HEIGHT, WINDOW_WIDTH, 0, 0, "My Window");
 
     Core core;
     core.init(win.hwnd, win.windowWidth, win.windowHeight);
@@ -99,64 +81,24 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     Matrix viewMatrix;
     viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
-    // print LookAt matrix
-    // MessageBoxA(NULL, 
-    //     ("View Matrix:\n" +
-    //     std::to_string(viewMatrix.m[0]) + " " + std::to_string(viewMatrix.m[1]) + " " + std::to_string(viewMatrix.m[2]) + " " + std::to_string(viewMatrix.m[3]) + "\n" +
-    //     std::to_string(viewMatrix.m[4]) + " " + std::to_string(viewMatrix.m[5]) + " " + std::to_string(viewMatrix.m[6]) + " " + std::to_string(viewMatrix.m[7]) + "\n" +
-    //     std::to_string(viewMatrix.m[8]) + " " + std::to_string(viewMatrix.m[9]) + " " + std::to_string(viewMatrix.m[10]) + " " + std::to_string(viewMatrix.m[11]) + "\n" +
-    //     std::to_string(viewMatrix.m[12]) + " " + std::to_string(viewMatrix.m[13]) + " " + std::to_string(viewMatrix.m[14]) + " " + std::to_string(viewMatrix.m[15]) + "\n"
-    //     ).c_str(),
-    //     "Info", MB_OK | MB_ICONINFORMATION);
-
     Matrix projectionMatrix;
     float zFar = 1000.0f;
     float zNear = 0.01f;
-    float FOV = 45.0f;
+    float FOV = 60.0f;
     projectionMatrix.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    // print Projection matrix
-    // MessageBoxA(NULL, 
-    //     ("Projection Matrix:\n" +
-    //     std::to_string(projectionMatrix.m[0]) + " " + std::to_string(projectionMatrix.m[1]) + " " + std::to_string(projectionMatrix.m[2]) + " " + std::to_string(projectionMatrix.m[3]) + "\n" +
-    //     std::to_string(projectionMatrix.m[4]) + " " + std::to_string(projectionMatrix.m[5]) + " " + std::to_string(projectionMatrix.m[6]) + " " + std::to_string(projectionMatrix.m[7]) + "\n" +
-    //     std::to_string(projectionMatrix.m[8]) + " " + std::to_string(projectionMatrix.m[9]) + " " + std::to_string(projectionMatrix.m[10]) + " " + std::to_string(projectionMatrix.m[11]) + "\n" +
-    //     std::to_string(projectionMatrix.m[12]) + " " + std::to_string(projectionMatrix.m[13]) + " " + std::to_string(projectionMatrix.m[14]) + " " + std::to_string(projectionMatrix.m[15]) + "\n"
-    //     ).c_str(),
-    //     "Info", MB_OK | MB_ICONINFORMATION);
     
     Matrix WorldMatrix;
     WorldMatrix.setIdentity();
 
-    Plane plane(shaderManager);
+    Cube cube(shaderManager);
+    Sphere sphere(shaderManager);
     VertexShaderCBStaticModel vsCBStaticModel;
 
     vsCBStaticModel.W = WorldMatrix;
-
-    // print World matrix
-    // MessageBoxA(NULL, 
-    //     ("World Matrix:\n" +
-    //     std::to_string(vsCBStaticModel.W.m[0]) + " " + std::to_string(vsCBStaticModel.W.m[1]) + " " + std::to_string(vsCBStaticModel.W.m[2]) + " " + std::to_string(vsCBStaticModel.W.m[3]) + "\n" +
-    //     std::to_string(vsCBStaticModel.W.m[4]) + " " + std::to_string(vsCBStaticModel.W.m[5]) + " " + std::to_string(vsCBStaticModel.W.m[6]) + " " + std::to_string(vsCBStaticModel.W.m[7]) + "\n" +
-    //     std::to_string(vsCBStaticModel.W.m[8]) + " " + std::to_string(vsCBStaticModel.W.m[9]) + " " + std::to_string(vsCBStaticModel.W.m[10]) + " " + std::to_string(vsCBStaticModel.W.m[11]) + "\n" +
-    //     std::to_string(vsCBStaticModel.W.m[12]) + " " + std::to_string(vsCBStaticModel.W.m[13]) + " " + std::to_string(vsCBStaticModel.W.m[14]) + " " + std::to_string(vsCBStaticModel.W.m[15]) + "\n"
-    //     ).c_str(),
-    //     "Info", MB_OK | MB_ICONINFORMATION);
-
     vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
-    // print VP matrix
-    // MessageBoxA(NULL,
-    //     ("VP Matrix:\n" +
-    //     std::to_string(vsCBStaticModel.VP.m[0]) + " " + std::to_string(vsCBStaticModel.VP.m[1]) + " " + std::to_string(vsCBStaticModel.VP.m[2]) + " " + std::to_string(vsCBStaticModel.VP.m[3]) + "\n" +
-    //     std::to_string(vsCBStaticModel.VP.m[4]) + " " + std::to_string(vsCBStaticModel.VP.m[5]) + " " + std::to_string(vsCBStaticModel.VP.m[6]) + " " + std::to_string(vsCBStaticModel.VP.m[7]) + "\n" +
-    //     std::to_string(vsCBStaticModel.VP.m[8]) + " " + std::to_string(vsCBStaticModel.VP.m[9]) + " " + std::to_string(vsCBStaticModel.VP.m[10]) + " " + std::to_string(vsCBStaticModel.VP.m[11]) + "\n" +
-    //     std::to_string(vsCBStaticModel.VP.m[12]) + " " + std::to_string(vsCBStaticModel.VP.m[13]) + " " + std::to_string(vsCBStaticModel.VP.m[14]) + " " + std::to_string(vsCBStaticModel.VP.m[15]) + "\n"
-    //     ).c_str(),
-    //     "Info", MB_OK | MB_ICONINFORMATION);
-
-
-    plane.init(&core, &vsCBStaticModel);
+    cube.init(&core, &vsCBStaticModel);
+    //sphere.init(&core, &vsCBStaticModel);
 
     GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
     float time = 0.0f;
@@ -172,12 +114,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         time += dt;
         time = fmodf(time, 2 * 3.1415f); // Avoid precision issues
 
-        Vec3 from = Vec3(60 * cos(time), 25, 60 * sinf(time));
+        Vec3 from = Vec3(20 * cos(time), 5, 20 * sinf(time));
         camera.from = from;
         viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
         vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
-        plane.draw(&core, &vsCBStaticModel);
+        cube.draw(&core, &vsCBStaticModel);
         core.finishFrame();
     }
 
