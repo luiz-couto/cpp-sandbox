@@ -129,12 +129,16 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimatedMesh.h" />
+    <ClInclude Include="AnimatedModel.h" />
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="Barrier.h" />
     <ClInclude Include="ConstantBufferReflection.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="GamesEngineeringBase.h" />
+    <ClInclude Include="GEMAnimatedObject.h" />
     <ClInclude Include="GEMLoader.h" />
     <ClInclude Include="GEMObject.h" />
     <ClInclude Include="Math.h" />

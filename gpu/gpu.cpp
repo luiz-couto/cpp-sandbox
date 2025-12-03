@@ -9,6 +9,7 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "GEMObject.h"
+#include "GEMAnimatedObject.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -50,13 +51,25 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     Cube cube(shaderManager);
     Sphere sphere(shaderManager);
     GEMObject acacia(shaderManager, &core, "assets/models/acacia_003.gem");
+    GEMAnimatedObject rex(shaderManager, "assets/models/TRex.gem");
+
     VertexShaderCBStaticModel vsCBStaticModel;
+    VertexShaderCBAnimatedModel vsCBAnimatedModel;
 
     vsCBStaticModel.W = WorldMatrix;
     vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
-    cube.init(&core, &vsCBStaticModel);
-    acacia.init(&core, &vsCBStaticModel);
+    vsCBAnimatedModel.W = WorldMatrix;
+    vsCBAnimatedModel.VP = (projectionMatrix.mul(viewMatrix));
+
+    AnimationInstance animatedInstance;
+    rex.init(&core, &vsCBAnimatedModel);
+
+    animatedInstance.init(&rex.animatedModel->animation, 0);
+    memcpy(vsCBAnimatedModel.bones, animatedInstance.matrices, sizeof(vsCBAnimatedModel.bones));
+    
+    //cube.init(&core, &vsCBStaticModel);
+    //acacia.init(&core, &vsCBStaticModel);
     //sphere.init(&core, &vsCBStaticModel);
 
     GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
@@ -77,13 +90,24 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         camera.from = from;
         viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
-        vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
-        acacia.draw(&core, &vsCBStaticModel);
+        //vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
+        vsCBAnimatedModel.VP = (projectionMatrix.mul(viewMatrix));
+        // acacia.draw(&core, &vsCBStaticModel);
 
         // cube.draw(&core, &vsCBStaticModel);
 
-        vsCBStaticModel.W.setScallig(0.01f, 0.01f, 0.01f);
+        //vsCBStaticModel.W.setScaling(0.01f, 0.01f, 0.01f);
+        vsCBAnimatedModel.W.setScaling(0.01f, 0.01f, 0.01f);
         // cube.draw(&core, &vsCBStaticModel);
+
+        animatedInstance.update("run", dt);
+        //animatedInstance.animationFinished();
+		if (animatedInstance.animationFinished() == true)
+		{
+			animatedInstance.resetAnimationTime();
+		}
+        memcpy(vsCBAnimatedModel.bones, animatedInstance.matrices, sizeof(vsCBAnimatedModel.bones));
+        rex.draw(&core, &vsCBAnimatedModel); 
 
         // vsCBStaticModel.W.setTranslation(0, 0, 0);
 
