@@ -136,6 +136,7 @@
     <ClInclude Include="Fence.h" />
     <ClInclude Include="GamesEngineeringBase.h" />
     <ClInclude Include="GEMLoader.h" />
+    <ClInclude Include="GEMObject.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Plane.h" />
