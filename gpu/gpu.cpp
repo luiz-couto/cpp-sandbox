@@ -7,56 +7,12 @@
 #include "Mesh.h"
 #include "Cube.h"
 #include "Sphere.h"
+#include "Plane.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
 
-// Constant buffers associates with the shader - use code reflection (to get the size of the buffer from the shader itself?)
-// Pipeline Manager to access many strcuts
-
-class Plane {
-public:
-    Mesh mesh;
-    ShaderManager* shaderManager;
-    PSOManager psos;
-    VertexLayoutCache vertexLayoutCache;
-
-    Plane(ShaderManager* sm) : shaderManager(sm) {}
-
-    void init(Core* core, VertexShaderCBStaticModel *vsCB) {
-        // Build geometry
-        std::vector<STATIC_VERTEX> vertices;
-        vertices.push_back(addVertex(Vec3(-15, 0, -15), Vec3(0, 1, 0), 0, 0));
-        vertices.push_back(addVertex(Vec3( 15, 0, -15), Vec3(0, 1, 0), 1, 0));
-        vertices.push_back(addVertex(Vec3(-15, 0,  15), Vec3(0, 1, 0), 0, 1));
-        vertices.push_back(addVertex(Vec3( 15, 0,  15), Vec3(0, 1, 0), 1, 1));
-
-        std::vector<unsigned int> indices = { 2, 1, 0,  1, 2, 3 };
-        mesh.initFromVec(core, vertices, indices);
-
-        Shader* vertexShaderBlob = shaderManager->getVertexShader("VertexShader.hlsl", vsCB);
-        Shader* pixelShaderBlob = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
-        psos.createPSO(core, "Plane", vertexShaderBlob->shaderBlob, pixelShaderBlob->shaderBlob, vertexLayoutCache.getStaticLayout());
-    }
-
-    void draw(Core* core, VertexShaderCBStaticModel *vsCB) {
-        core->beginRenderPass();
-
-        // 1. Bind PSO FIRST
-        psos.bind(core, "Plane");
-
-        // 2. Update constant buffer values
-        shaderManager->updateConstantVS("VertexShader.hlsl", "W",  &vsCB->W);
-        shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
-
-        // 3. Apply vertex shader (binds CBV)
-        shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
-
-        // 4. Draw
-        mesh.draw(core);
-    }
-
-};
+// Create Pipeline Manager to access many strcuts
 
 class Camera {
     public:
