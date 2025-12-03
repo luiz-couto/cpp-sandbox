@@ -8,6 +8,7 @@
 #include "Cube.h"
 #include "Sphere.h"
 #include "Plane.h"
+#include "StaticMesh.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -22,6 +23,43 @@ class Camera {
 
     Camera() : from(25.0f, 55.0f, 80.0f), to(0, 1, 0), up(0, 1, 0) {}
     Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
+};
+
+class Acacia {
+public:
+    StaticMesh mesh;
+    ShaderManager* shaderManager;
+    PSOManager psos;
+    VertexLayoutCache vertexLayoutCache;
+
+    Acacia(ShaderManager* sm, Core* core) : shaderManager(sm), mesh(core) {}
+
+    void init(Core* core, VertexShaderCBStaticModel *vsCB) {
+        // Build geometry
+        mesh.load("assets/models/acacia_003.gem");
+
+        Shader* vertexShaderBlob = shaderManager->getVertexShader("VertexShader.hlsl", vsCB);
+        Shader* pixelShaderBlob = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
+        psos.createPSO(core, "Acacia", vertexShaderBlob->shaderBlob, pixelShaderBlob->shaderBlob, vertexLayoutCache.getStaticLayout());
+    }
+
+    void draw(Core* core, VertexShaderCBStaticModel *vsCB) {
+        core->beginRenderPass();
+
+        // 1. Bind PSO FIRST
+        psos.bind(core, "Acacia");
+
+        // 2. Update constant buffer values
+        shaderManager->updateConstantVS("VertexShader.hlsl", "W",  &vsCB->W);
+        shaderManager->updateConstantVS("VertexShader.hlsl", "VP", &vsCB->VP);
+
+        // 3. Apply vertex shader (binds CBV)
+        shaderManager->getVertexShader("VertexShader.hlsl", vsCB)->apply(core);
+
+        // 4. Draw
+        mesh.draw();
+    }
+
 };
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
@@ -48,12 +86,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
     Cube cube(shaderManager);
     Sphere sphere(shaderManager);
+    Acacia acacia(shaderManager, &core);
     VertexShaderCBStaticModel vsCBStaticModel;
 
     vsCBStaticModel.W = WorldMatrix;
     vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
 
     cube.init(&core, &vsCBStaticModel);
+    acacia.init(&core, &vsCBStaticModel);
     //sphere.init(&core, &vsCBStaticModel);
 
     GamesEngineeringBase::Timer tim = GamesEngineeringBase::Timer();
@@ -75,12 +115,16 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
         vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
-        cube.draw(&core, &vsCBStaticModel);
+        acacia.draw(&core, &vsCBStaticModel);
 
-        vsCBStaticModel.W.setTranslation(5, 0, 0);
-        cube.draw(&core, &vsCBStaticModel);
+        // cube.draw(&core, &vsCBStaticModel);
 
-        vsCBStaticModel.W.setTranslation(0, 0, 0);
+        vsCBStaticModel.W.setScallig(0.01f, 0.01f, 0.01f);
+        // cube.draw(&core, &vsCBStaticModel);
+
+        // vsCBStaticModel.W.setTranslation(0, 0, 0);
+
+
         core.finishFrame();
     }
 
