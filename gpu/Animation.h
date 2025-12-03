@@ -73,9 +73,9 @@ struct AnimationSequence {
 		Matrix rotation = interpolate(frames[baseFrame].rotations[boneIndex], frames[nextFrame(baseFrame)].rotations[boneIndex], interpolationFact).toMatrix();
 		Matrix translation = Matrix::setTranslation(interpolate(frames[baseFrame].positions[boneIndex], frames[nextFrame(baseFrame)].positions[boneIndex], interpolationFact));
 		Matrix local = (translation.mul(rotation)).mul(scale);
-		if (skeleton->bones[boneIndex].parentIndex > -1)
-		{
-			Matrix global = local.mul(matrices[skeleton->bones[boneIndex].parentIndex]);
+
+		if (skeleton->bones[boneIndex].parentIndex > -1) {
+			Matrix global = matrices[skeleton->bones[boneIndex].parentIndex].mul(local);
 			return global;
 		}
 		return local;
