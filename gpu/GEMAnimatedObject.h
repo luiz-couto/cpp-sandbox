@@ -23,7 +23,7 @@ public:
         animatedModel->load(filename);
 
         Shader* vertexShaderBlob = shaderManager->getVertexShader("AnimatedVertexShader.hlsl", vsCB);
-        Shader* pixelShaderBlob = shaderManager->getShader("PixelShader.hlsl", PIXEL_SHADER);
+        Shader* pixelShaderBlob = shaderManager->getShader("PixelShaderTexture.hlsl", PIXEL_SHADER);
 
         psos.createPSO(core, filename, vertexShaderBlob->shaderBlob, pixelShaderBlob->shaderBlob, AnimatedVertexLayoutCache::getAnimatedLayout());
     }
@@ -43,7 +43,7 @@ public:
         shaderManager->getVertexShader("AnimatedVertexShader.hlsl", vsCB)->apply(core);
 
         // 4. Draw
-        animatedModel->draw();
+        animatedModel->draw(shaderManager);
     }
 
 };

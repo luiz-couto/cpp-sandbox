@@ -50,8 +50,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
     Cube cube(shaderManager);
     Sphere sphere(shaderManager);
-    GEMObject acacia(shaderManager, &core, "assets/models/acacia_003.gem");
-    GEMAnimatedObject rex(shaderManager, "assets/models/TRex.gem");
+    GEMObject acacia(shaderManager, &core, "models/acacia_003.gem");
+    GEMAnimatedObject rex(shaderManager, "models/TRex.gem");
 
     VertexShaderCBStaticModel vsCBStaticModel;
     VertexShaderCBAnimatedModel vsCBAnimatedModel;
