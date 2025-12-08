@@ -27,6 +27,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
     case WM_KEYDOWN: {
         window->keys[(unsigned int)wParam] = true;
+        window->runKeyCallback(wParam);
         return 0;
     }
     case WM_KEYUP: {

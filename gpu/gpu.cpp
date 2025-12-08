@@ -13,6 +13,8 @@
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
+#define Z_FAR 1000.0f
+#define Z_NEAR 0.01f
 
 // Create Pipeline Manager to access many strcuts
 
@@ -22,8 +24,31 @@ class Camera {
     Vec3 to;
     Vec3 up;
 
-    Camera() : from(25.0f, 55.0f, 80.0f), to(0, 1, 0), up(0, 1, 0) {}
+    Camera() : from(11.0f, 5.0f, 11.0f), to(0, 1, 0), up(0, 1, 0) {}
     Camera(Vec3 from, Vec3 to, Vec3 up) : from(from), to(to), up(up) {}
+    
+    void OnPressW() {
+        //MessageBoxA(NULL, "W Pressed", "Info", MB_OK | MB_ICONINFORMATION);
+        this->from.z = this->from.z - 1.0f;
+    }
+    void OnPressS() {
+        this->from.z = this->from.z + 1.0f;
+    }
+
+    void OnPressA() {
+        this->from.x = this->from.x - 1.0f;
+    }
+
+    void OnPressD() {
+        this->from.x = this->from.x + 1.0f;
+    }
+
+    void registerKeysCallbacks(Window *win) {
+        win->registerKeyCallback('W', [&]() { this->OnPressW(); });
+        win->registerKeyCallback('S', [&]() { this->OnPressS(); });
+        win->registerKeyCallback('A', [&]() { this->OnPressA(); });
+        win->registerKeyCallback('D', [&]() { this->OnPressD(); });
+    }
 };
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
@@ -35,15 +60,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     
     ShaderManager* shaderManager = new ShaderManager(&core);
     Camera camera;
+    camera.registerKeysCallbacks(&win);
     
     Matrix viewMatrix;
     viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
     Matrix projectionMatrix;
-    float zFar = 1000.0f;
-    float zNear = 0.01f;
     float FOV = 60.0f;
-    projectionMatrix.setProjectionMatrix(zFar, zNear, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
+    projectionMatrix.setProjectionMatrix(Z_FAR, Z_NEAR, FOV, WINDOW_WIDTH, WINDOW_HEIGHT);
     
     Matrix WorldMatrix;
     WorldMatrix.setIdentity();
@@ -86,8 +110,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         time += dt;
         time = fmodf(time, 2 * 3.1415f); // Avoid precision issues
 
-        Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
-        camera.from = from;
         viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
         //vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
@@ -100,7 +122,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         vsCBAnimatedModel.W.setScaling(0.01f, 0.01f, 0.01f);
         // cube.draw(&core, &vsCBStaticModel);
 
-        animatedInstance.update("run", dt);
+        animatedInstance.update("roar", dt);
         //animatedInstance.animationFinished();
 		if (animatedInstance.animationFinished() == true)
 		{

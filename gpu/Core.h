@@ -112,7 +112,7 @@ public:
     // allocates the depth stencil resource in GPU local memory
     // create viewport and scissor rect
     // creates a basic root signature
-    void init(HWND hwnd, int _width, int _height, bool enableDebugLayer = true) {
+    void init(HWND hwnd, int _width, int _height, bool enableDebugLayer = false) {
         wWidth = _width;
         wHeight = _height;
 
