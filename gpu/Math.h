@@ -437,11 +437,27 @@ class Matrix {
         m[11] = tz;
     }
 
-    void setScallig(float sx, float sy, float sz) {
+    static Matrix setTranslation(const Vec3& t) {
+        Matrix result;
+        result.m[3] = t.x;
+        result.m[7] = t.y;
+        result.m[11] = t.z;
+        return result;
+    }
+
+    void setScaling(float sx, float sy, float sz) {
         setIdentity();
         m[0] = sx;
         m[5] = sy;
         m[10] = sz;
+    }
+    
+    static Matrix setScaling(const Vec3& s) {
+        Matrix result;
+        result.m[0] = s.x;
+        result.m[5] = s.y;
+        result.m[10] = s.z;
+        return result;
     }
 
     Vec3 rotateX(float angle, const Vec3& v) {
@@ -465,7 +481,7 @@ class Matrix {
     }
 
     Vec3 scaling(float sx, float sy, float sz, const Vec3& v) {
-        setScallig(sx, sy, sz);
+        setScaling(sx, sy, sz);
         return mulPoint(v);
     }
 
