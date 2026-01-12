@@ -52,6 +52,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     Sphere sphere(shaderManager);
     GEMObject acacia(shaderManager, &core, "models/acacia_003.gem");
     GEMAnimatedObject rex(shaderManager, "models/TRex.gem");
+    GEMAnimatedObject duck(shaderManager, "models/Duck-white.gem");
 
     VertexShaderCBStaticModel vsCBStaticModel;
     VertexShaderCBAnimatedModel vsCBAnimatedModel;
@@ -63,12 +64,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
     vsCBAnimatedModel.VP = (projectionMatrix.mul(viewMatrix));
 
     AnimationInstance animatedInstance;
-    rex.init(&core, &vsCBAnimatedModel);
+    //rex.init(&core, &vsCBAnimatedModel);
+    duck.init(&core, &vsCBAnimatedModel);
 
-    animatedInstance.init(&rex.animatedModel->animation, 0);
+    animatedInstance.init(&duck.animatedModel->animation, 0);
     memcpy(vsCBAnimatedModel.bones, animatedInstance.matrices, sizeof(vsCBAnimatedModel.bones));
     
-    //cube.init(&core, &vsCBStaticModel);
+    cube.init(&core, &vsCBStaticModel);
     //acacia.init(&core, &vsCBStaticModel);
     //sphere.init(&core, &vsCBStaticModel);
 
@@ -90,24 +92,24 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
         camera.from = from;
         viewMatrix.setLookatMatrix(camera.from, camera.to, camera.up);
 
-        //vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
+        vsCBStaticModel.VP = (projectionMatrix.mul(viewMatrix));
         vsCBAnimatedModel.VP = (projectionMatrix.mul(viewMatrix));
         // acacia.draw(&core, &vsCBStaticModel);
 
+        cube.draw(&core, &vsCBStaticModel);
+
+        vsCBStaticModel.W.setScaling(2.0f, 2.0f, 2.0f);
+        vsCBAnimatedModel.W.setScaling(0.05f, 0.05f, 0.05f);
         // cube.draw(&core, &vsCBStaticModel);
 
-        //vsCBStaticModel.W.setScaling(0.01f, 0.01f, 0.01f);
-        vsCBAnimatedModel.W.setScaling(0.01f, 0.01f, 0.01f);
-        // cube.draw(&core, &vsCBStaticModel);
-
-        animatedInstance.update("run", dt);
+        animatedInstance.update("idle variation", dt);
         //animatedInstance.animationFinished();
 		if (animatedInstance.animationFinished() == true)
 		{
 			animatedInstance.resetAnimationTime();
 		}
         memcpy(vsCBAnimatedModel.bones, animatedInstance.matrices, sizeof(vsCBAnimatedModel.bones));
-        rex.draw(&core, &vsCBAnimatedModel); 
+        //duck.draw(&core, &vsCBAnimatedModel); 
 
         // vsCBStaticModel.W.setTranslation(0, 0, 0);
 

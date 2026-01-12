@@ -55,6 +55,8 @@ class AnimatedModel {
             animation.skeleton.bones.push_back(bone);
         }
 
+        std::string allAnimationNames;
+
         // Load animation data - animations
         for (int i = 0; i < gemanimation.animations.size(); i++) {
             std::string name = gemanimation.animations[i].name;
@@ -76,7 +78,9 @@ class AnimatedModel {
                 aseq.frames.push_back(frame);
             }
             animation.animations.insert({ name, aseq });
+            allAnimationNames += name + "\n";
         }
+        //MessageBoxA(NULL, allAnimationNames.c_str(), "Loaded Animations", MB_OK);
     }
 
     void draw(ShaderManager* shaderManager) {
