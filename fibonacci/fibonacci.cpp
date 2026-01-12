@@ -34,7 +34,7 @@ int main() {
 
     auto start = std::chrono::high_resolution_clock::now();
     
-    int sum = fibonacciWithMemory(n);
+    int sum = fibonacci(n);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::print("Time: {} ms\n", std::chrono::duration<double, std::milli>(end - start).count());
