@@ -47,7 +47,8 @@ public:
         std::cout << std::endl;
     }
 
-    // add copy and move constructors and assignment operators here
+    // copy constructors and assignment operators
+
     SimpleVector(const SimpleVector& other)
         : data(new T[other.capacity]), size(other.size), capacity(other.capacity) {
         for (std::size_t i = 0; i < size; ++i) {
@@ -69,6 +70,30 @@ public:
         }
         return *this;
     }
+
+    // move constructors and assignment operators
+
+    SimpleVector(SimpleVector&& other) noexcept
+        : data(other.data), size(other.size), capacity(other.capacity) {
+        other.data = nullptr;
+        other.size = 0;
+        other.capacity = 0;
+    }
+
+    SimpleVector& operator=(SimpleVector&& other) noexcept {
+        if (this != &other) {
+            delete[] data;
+
+            data = other.data;
+            size = other.size;
+            capacity = other.capacity;
+
+            other.data = nullptr;
+            other.size = 0;
+            other.capacity = 0;
+        }
+        return *this;
+    }
 };
 
 int main() {
@@ -85,6 +110,13 @@ int main() {
     SimpleVector<int> c;
     c = a; // Test copy assignment operator
     c.print();
+
+    SimpleVector<int> d = std::move(a); // Test move constructor
+    d.print();
+
+    SimpleVector<int> e;
+    e = std::move(b); // Test move assignment operator
+    e.print();
 
     return 0;
 }
