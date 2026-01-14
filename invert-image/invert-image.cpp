@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <string>
+#include <chrono>
 
 
 void CPU(const unsigned char* hImg, unsigned char* hOutImg, int width, int height, int channels) {
@@ -21,6 +22,24 @@ void CPU(const unsigned char* hImg, unsigned char* hOutImg, int width, int heigh
     }
 }
 
+void GPU(const unsigned char* hImg, unsigned char* hOutImg, int width, int height, int channels) {
+    const __m256i v255 = _mm256_set1_epi8(static_cast<char>(255));
+    size_t totalPixels = static_cast<size_t>(width) * height * channels;
+    size_t i = 0;
+
+    // Process 32 bytes at a time while we have enough data
+    for (; i + 32 <= totalPixels; i += 32) {
+        __m256i v = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(hImg + i));
+        __m256i out = _mm256_subs_epu8(v255, v);
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(hOutImg + i), out);
+    }
+
+    // Handle remaining bytes
+    for (; i < totalPixels; i++) {
+        hOutImg[i] = 255 - hImg[i];
+    }
+}
+
 
 int main()
 {
@@ -29,6 +48,7 @@ int main()
     int width, height, channels;
 
     unsigned char* hImg = stbi_load(inputPath.c_str(), &width, &height, &channels, 3); // 3 forces 3 channels at the end
+    channels = 3; // Set channels to 3 since we forced it in stbi_load
 
     if (!hImg) {
         std::cerr << "Failed to load image\n";
@@ -36,8 +56,12 @@ int main()
     }
     unsigned char* hOutImg = new unsigned char[width * height * channels];
 
-    CPU(hImg, hOutImg, width, height, channels);
-    stbi_write_jpg("resources/inverted.jpg", width, height, channels, hOutImg, 95);
+    auto start = std::chrono::high_resolution_clock::now();
+    GPU(hImg, hOutImg, width, height, channels);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time: " << std::chrono::duration<double, std::milli>(end - start).count() << " ms\n";
+
+    stbi_write_jpg("resources/inverted2.jpg", width, height, channels, hOutImg, 95);
     delete[] hOutImg;
     stbi_image_free(hImg);
     return 0;
