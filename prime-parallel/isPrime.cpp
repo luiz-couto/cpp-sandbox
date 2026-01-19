@@ -45,7 +45,6 @@ void doParallel(unsigned long endPrime) {
 		unsigned long end = (i == procNum - 1) ? endPrime : (i + 1) * chunkSize;
 		threads[i] = std::jthread([start, end, &results, i] {
 			unsigned int counter = doSequential(start, end);
-			//std::cout << counter << "\n";
 			results[i] = counter;
 		});
 	}
