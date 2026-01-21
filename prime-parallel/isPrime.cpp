@@ -2,6 +2,10 @@
 #include <cmath>
 #include <thread>
 #include <vector>
+#include <chrono>
+#include <print>
+
+typedef std::chrono::high_resolution_clock Clock;
 
 bool isPrime(unsigned long num) {
 	if (num < 2) return false;           // 0 and 1 are not prime
@@ -22,7 +26,7 @@ void doSequential(unsigned long endPrime) {
 	for (unsigned long i = 0; i < endPrime; i++)
 		if (isPrime(i)) counter++;
 
-	std::cout << "Number of primes until " << endPrime << " is " << counter << std::endl; 
+	//std::cout << "Number of primes until " << endPrime << " is " << counter << std::endl; 
 }
 
 unsigned int doSequential(unsigned long startPrime, unsigned long endPrime) {
@@ -33,8 +37,7 @@ unsigned int doSequential(unsigned long startPrime, unsigned long endPrime) {
 	return counter;
 }
 
-void doParallel(unsigned long endPrime) {
-	unsigned int procNum = std::thread::hardware_concurrency();
+void doParallel(unsigned long endPrime, unsigned int procNum) {
 	std::vector<std::jthread> threads(procNum);
 	std::vector<unsigned int> results(threads.size());
 
@@ -58,11 +61,26 @@ void doParallel(unsigned long endPrime) {
 		counter += results[i];
 	}
 
-	std::cout << "Number of primes until " << endPrime << " is " << counter << std::endl; 
+	//std::cout << "Number of primes until " << endPrime << " is " << counter << std::endl; 
 }
 
 int main() {
 	unsigned long endPrime = 1 << 26;
+
+	auto start = Clock::now();
 	doSequential(endPrime);
-	doParallel(endPrime);
+	auto end = Clock::now();
+	double duration = std::chrono::duration<double, std::milli>(end - start).count();
+	std::print("{}	{}\n", "Seq", duration);
+	
+	//unsigned int procNum = std::thread::hardware_concurrency();
+	unsigned int procNumList[6] = {1, 2, 4, 8, 16, 22};
+
+	for (int i=0; i<6; i++) {
+		start = Clock::now();
+		doParallel(endPrime, procNumList[i]);
+		end = Clock::now();
+		duration = std::chrono::duration<double, std::milli>(end - start).count();
+		std::print("{}	{}\n", procNumList[i], duration);
+	}
 }
