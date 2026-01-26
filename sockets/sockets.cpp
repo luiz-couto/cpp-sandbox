@@ -44,7 +44,7 @@ int server() {
     }
 
     std::cout << "Server is listening on port 65432..." << std::endl;
-
+    
     // Step 5: Accept a connection
     sockaddr_in client_address = {};
     int client_address_len = sizeof(client_address);
@@ -60,27 +60,33 @@ int server() {
     inet_ntop(AF_INET, &client_address.sin_addr, client_ip, INET_ADDRSTRLEN);
     std::cout << "Accepted connection from " << client_ip << ":" << ntohs(client_address.sin_port) << std::endl;
 
-    // Step 6: Communicate with the client
-    char buffer[1024] = { 0 };
-    int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
-        std::cout << "Received: " << buffer << std::endl;
+    while (true) {
+        // Step 6: Communicate with the client
+        char buffer[1024] = { 0 };
+        int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0';
+            if (buffer == std::string("exit")) {
+                std::cout << "Exit command received. Shutting down server." << std::endl;
+                closesocket(client_socket);
+                break;
+            }
 
-        // Reverse the string
-        std::string response(buffer);
-        std::reverse(response.begin(), response.end());
+            std::cout << "Received: " << buffer << std::endl;
+    
+            // Reverse the string
+            std::string response(buffer);
+            std::reverse(response.begin(), response.end());
+    
+            // Send the reversed string back
+            send(client_socket, response.c_str(), static_cast<int>(response.size()), 0);
+            std::cout << "Reversed string sent back to client." << std::endl;
+        }
 
-        // Send the reversed string back
-        send(client_socket, response.c_str(), static_cast<int>(response.size()), 0);
-        std::cout << "Reversed string sent back to client." << std::endl;
     }
 
-    // Step 7: Clean up
-    closesocket(client_socket);
     closesocket(server_socket);
     WSACleanup();
-
     return 0;
 }
 

@@ -54,33 +54,42 @@ void run_client() {
 
     std::cout << "Connected to the server." << std::endl;
 
-    // Send the sentence to the server
-    if (send(client_socket, sentence.c_str(), static_cast<int>(sentence.size()), 0) == SOCKET_ERROR) {
-        std::cerr << "Send failed with error: " << WSAGetLastError() << std::endl;
-        closesocket(client_socket);
-        WSACleanup();
-        return;
-    }
+    while (true) {
+        std::cout << "Enter a sentence to send to the server (or 'exit' to quit): ";
+        std::getline(std::cin, sentence);
+        if (sentence == "exit") {
+            send(client_socket, sentence.c_str(), static_cast<int>(sentence.size()), 0);
+            // Cleanup
+            closesocket(client_socket);
+            WSACleanup();
+            break;
+        }
 
-    std::cout << "Sent: " << sentence << std::endl;
+        // Send the sentence to the server
+        if (send(client_socket, sentence.c_str(), static_cast<int>(sentence.size()), 0) == SOCKET_ERROR) {
+            std::cerr << "Send failed with error: " << WSAGetLastError() << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return;
+        }
 
-    // Receive the reversed sentence from the server
-    char buffer[DEFAULT_BUFFER_SIZE] = { 0 };
-    int bytes_received = recv(client_socket, buffer, DEFAULT_BUFFER_SIZE - 1, 0);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0'; // Null-terminate the received data
-        std::cout << "Received from server: " << buffer << std::endl;
-    }
-    else if (bytes_received == 0) {
-        std::cout << "Connection closed by server." << std::endl;
-    }
-    else {
-        std::cerr << "Receive failed with error: " << WSAGetLastError() << std::endl;
-    }
+        std::cout << "Sent: " << sentence << std::endl;
 
-    // Cleanup
-    closesocket(client_socket);
-    WSACleanup();
+        // Receive the reversed sentence from the server
+        char buffer[DEFAULT_BUFFER_SIZE] = { 0 };
+        int bytes_received = recv(client_socket, buffer, DEFAULT_BUFFER_SIZE - 1, 0);
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0'; // Null-terminate the received data
+            std::cout << "Received from server: " << buffer << std::endl;
+        }
+        else if (bytes_received == 0) {
+            std::cout << "Connection closed by server." << std::endl;
+        }
+        else {
+            std::cerr << "Receive failed with error: " << WSAGetLastError() << std::endl;
+        }
+
+    }
 }
 
 int main() {
