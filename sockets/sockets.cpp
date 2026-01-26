@@ -4,6 +4,30 @@
 #include <string>
 #include <thread>
 
+void handleClient(SOCKET client_socket) {
+    char buffer[1024] = { 0 };
+    while (true) {
+        int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0';
+            if (buffer == std::string("exit")) {
+                std::cout << "Exit command received. Closing client connection." << std::endl;
+                closesocket(client_socket);
+                break;
+            }
+
+            std::cout << "Received: " << buffer << std::endl;
+
+            // Reverse the string
+            std::string response(buffer);
+            std::reverse(response.begin(), response.end());
+
+            // Send the reversed string back
+            send(client_socket, response.c_str(), static_cast<int>(response.size()), 0);
+            std::cout << "Reversed string sent back to client." << std::endl;
+        }
+    }
+}
 
 #pragma comment(lib, "Ws2_32.lib")
 int server() {
@@ -45,44 +69,26 @@ int server() {
 
     std::cout << "Server is listening on port 65432..." << std::endl;
     
-    // Step 5: Accept a connection
-    sockaddr_in client_address = {};
-    int client_address_len = sizeof(client_address);
-    SOCKET client_socket = accept(server_socket, (sockaddr*)&client_address, &client_address_len);
-    if (client_socket == INVALID_SOCKET) {
-        std::cerr << "Accept failed with error: " << WSAGetLastError() << std::endl;
-        closesocket(server_socket);
-        WSACleanup();
-        return 1;
-    }
-
-    char client_ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &client_address.sin_addr, client_ip, INET_ADDRSTRLEN);
-    std::cout << "Accepted connection from " << client_ip << ":" << ntohs(client_address.sin_port) << std::endl;
-
+    
     while (true) {
-        // Step 6: Communicate with the client
-        char buffer[1024] = { 0 };
-        int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received > 0) {
-            buffer[bytes_received] = '\0';
-            if (buffer == std::string("exit")) {
-                std::cout << "Exit command received. Shutting down server." << std::endl;
-                closesocket(client_socket);
-                break;
-            }
-
-            std::cout << "Received: " << buffer << std::endl;
-    
-            // Reverse the string
-            std::string response(buffer);
-            std::reverse(response.begin(), response.end());
-    
-            // Send the reversed string back
-            send(client_socket, response.c_str(), static_cast<int>(response.size()), 0);
-            std::cout << "Reversed string sent back to client." << std::endl;
+        // Step 5: Accept a connection
+        sockaddr_in client_address = {};
+        int client_address_len = sizeof(client_address);
+        SOCKET client_socket = accept(server_socket, (sockaddr*)&client_address, &client_address_len);
+        if (client_socket == INVALID_SOCKET) {
+            std::cerr << "Accept failed with error: " << WSAGetLastError() << std::endl;
+            closesocket(server_socket);
+            WSACleanup();
+            return 1;
         }
+    
+        char client_ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &client_address.sin_addr, client_ip, INET_ADDRSTRLEN);
+        std::cout << "Accepted connection from " << client_ip << ":" << ntohs(client_address.sin_port) << std::endl;
 
+        // Handle client in a separate thread
+        std::thread client_thread(handleClient, client_socket);
+        client_thread.detach();
     }
 
     closesocket(server_socket);

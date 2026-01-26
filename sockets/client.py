@@ -1,7 +1,7 @@
 import socket
 
 host = '127.0.0.1'
-port = 8000
+port = 65432
 sentence = "Hello, World!"
 
 # Create a socket object using IPv4 (AF_INET) and TCP (SOCK_STREAM)
