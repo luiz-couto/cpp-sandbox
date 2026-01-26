@@ -14,7 +14,7 @@
  //void run_client(const char* host, unsigned int port, const std::string& sentence) {
 void run_client() {
     const char* host = "127.0.0.1"; // Server IP address
-    unsigned int port = 8000;
+    unsigned int port = 65432;
     std::string sentence = "Hello, server!";
 
     // Initialise WinSock
