@@ -35,7 +35,7 @@ public:
 	}
 
 	// Add code here
-	bool rayIntersect(Ray& r, float& t) {
+	bool rayIntersect(const Ray& r, float& t) {
 		float nDotOPlusD = -(n.dot(r.o) + d);
 		float nDotDir = n.dot(r.dir);
 		t = nDotOPlusD / nDotDir;
@@ -56,6 +56,8 @@ public:
 	float d; // For ray triangle if needed
 	unsigned int materialIndex;
 
+	Triangle() {}
+
 	void init(Vertex v0, Vertex v1, Vertex v2, unsigned int _materialIndex) {
 		materialIndex = _materialIndex;
 		vertices[0] = v0;
@@ -74,7 +76,32 @@ public:
 
 	// Add code here
 	bool rayIntersect(const Ray& r, float& t, float& u, float& v) const {
-		return true;
+		Plane plane = Plane();
+		Vec3 nPlane(this->n);
+		plane.init(nPlane, -d);
+
+		if (!plane.rayIntersect(r, t)) {
+			return false;
+		}
+
+		float intersection;
+		plane.rayIntersect(r, intersection);
+
+		Vec3 intersectionPoint = r.at(intersection);
+		Vec3 q1 = intersectionPoint - vertices[1].p;
+		Vec3 c1 = e1.cross(q1);
+
+		float alpha = c1.dot(n) / area;
+
+		Vec3 q2 = intersectionPoint - vertices[2].p;
+		Vec3 c2 = e2.cross(q2);
+
+		float beta = c2.dot(n) / area;
+
+		u = alpha;
+		v = beta;
+
+		return alpha + beta <= 1;
 	}
 
 	void interpolateAttributes(const float alpha, const float beta, const float gamma, Vec3& interpolatedNormal, float& interpolatedU, float& interpolatedV) const {

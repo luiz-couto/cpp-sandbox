@@ -78,10 +78,20 @@ int main(int argc, char *argv[])
 	Vec3 dir(0, 1, 0);
 	r.init(origin, dir);
 
-	float t;
-	bool intersect = p.rayIntersect(r, t);
+	Triangle t;
+	Vertex v0(Vec3(-1, 1, -1), Vec3(0, 1, 0), 1, 0);
+	Vertex v1(Vec3(1, 1, -1), Vec3(0, 1, 0), 1, 0);
+	Vertex v2(Vec3(0, 1, 1), Vec3(0, 1, 0), 1, 0);
 
-	std::cout << "Ray intersects plane: " << (intersect ? "Yes" : "No") << ", t = " << t << std::endl;
+	t.init(v0, v1, v2, 0);
+
+	float tt, tu, tv;
+	bool intersect = t.rayIntersect(r, tt, tu, tv);
+
+	// float t;
+	// bool intersect = p.rayIntersect(r, t);
+
+	std::cout << "Ray intersects plane: " << (intersect ? "Yes" : "No") << ", t = " << tt << std::endl;
 
 	while (running)
 	{

@@ -200,6 +200,9 @@ struct Vertex
 	Vec3 normal;
 	float u;
 	float v;
+
+	Vertex(Vec3 _p, Vec3 _normal, float _u, float _v) : p(_p), normal(_normal), u(_u), v(_v) {}
+	Vertex() {}
 };
 
 class Matrix
