@@ -168,12 +168,36 @@ public:
 
 	// Add code here
 	bool rayAABB(const Ray& r, float& t) {
-		return true;
+		float tMinX = (min.x - r.o.x) / r.dir.x;
+		float tMinY = (min.y - r.o.y) / r.dir.y;
+		float tMinZ = (min.z - r.o.z) / r.dir.z;
+
+		float yMaxX = (max.x - r.o.x) / r.dir.x;
+		float yMaxY = (max.y - r.o.y) / r.dir.y;
+		float yMaxZ = (max.z - r.o.z) / r.dir.z;
+
+		float tEntry = std::max(tMinX, std::max(tMinY, tMinZ));
+		float tExit = std::min(tMinX, std::min(tMinY, tMinZ));
+
+		if (tEntry <= tExit && tExit >= 0) return true;
+
+		return false;
 	}
 
 	// Add code here
 	bool rayAABB(const Ray& r) {
-		return true;
+		Vec3 tMin = (min - r.o) * (r.invDir);
+		Vec3 tMax = (max - r.o) * (r.invDir);
+
+		Vec3 tEntry = Min(tMin, tMax);
+		Vec3 tExit = Max(tMin, tMax);
+
+		float entryVal = std::max({ tEntry.x, tEntry.y, tEntry.z });
+		float exitVal = std::min({ tExit.x, tExit.y, tExit.z });
+
+		float t = std::min(entryVal, exitVal); // use this in the one that returns t
+
+		return (entryVal <= exitVal && exitVal > 0);
 	}
 
 	// Add code here
