@@ -3,52 +3,46 @@
 #include "Core.h"
 #include "Sampling.h"
 
-class Ray
-{
+class Ray {
 public:
 	Vec3 o;
 	Vec3 dir;
 	Vec3 invDir;
-	Ray()
-	{
-	}
-	Ray(Vec3 _o, Vec3 _d)
-	{
+	Ray() {}
+
+	Ray(Vec3 _o, Vec3 _d) {
 		init(_o, _d);
 	}
-	void init(Vec3 _o, Vec3 _d)
-	{
+
+	void init(Vec3 _o, Vec3 _d) {
 		o = _o;
 		dir = _d;
 		invDir = Vec3(1.0f / dir.x, 1.0f / dir.y, 1.0f / dir.z);
 	}
-	Vec3 at(const float t) const
-	{
+
+	Vec3 at(const float t) const {
 		return (o + (dir * t));
 	}
 };
 
-class Plane
-{
+class Plane {
 public:
 	Vec3 n;
 	float d;
-	void init(Vec3& _n, float _d)
-	{
+	void init(Vec3& _n, float _d) {
 		n = _n;
 		d = _d;
 	}
+
 	// Add code here
-	bool rayIntersect(Ray& r, float& t)
-	{
+	bool rayIntersect(Ray& r, float& t) {
 		return false;
 	}
 };
 
 #define EPSILON 0.001f
 
-class Triangle
-{
+class Triangle {
 public:
 	Vertex vertices[3];
 	Vec3 e1; // Edge 1
@@ -57,8 +51,8 @@ public:
 	float area; // Triangle area
 	float d; // For ray triangle if needed
 	unsigned int materialIndex;
-	void init(Vertex v0, Vertex v1, Vertex v2, unsigned int _materialIndex)
-	{
+
+	void init(Vertex v0, Vertex v1, Vertex v2, unsigned int _materialIndex) {
 		materialIndex = _materialIndex;
 		vertices[0] = v0;
 		vertices[1] = v1;
@@ -69,83 +63,81 @@ public:
 		area = e1.cross(e2).length() * 0.5f;
 		d = Dot(n, vertices[0].p);
 	}
-	Vec3 centre() const
-	{
+
+	Vec3 centre() const {
 		return (vertices[0].p + vertices[1].p + vertices[2].p) / 3.0f;
 	}
+
 	// Add code here
-	bool rayIntersect(const Ray& r, float& t, float& u, float& v) const
-	{
+	bool rayIntersect(const Ray& r, float& t, float& u, float& v) const {
 		return true;
 	}
-	void interpolateAttributes(const float alpha, const float beta, const float gamma, Vec3& interpolatedNormal, float& interpolatedU, float& interpolatedV) const
-	{
+
+	void interpolateAttributes(const float alpha, const float beta, const float gamma, Vec3& interpolatedNormal, float& interpolatedU, float& interpolatedV) const {
 		interpolatedNormal = vertices[0].normal * alpha + vertices[1].normal * beta + vertices[2].normal * gamma;
 		interpolatedNormal = interpolatedNormal.normalize();
 		interpolatedU = vertices[0].u * alpha + vertices[1].u * beta + vertices[2].u * gamma;
 		interpolatedV = vertices[0].v * alpha + vertices[1].v * beta + vertices[2].v * gamma;
 	}
+
 	// Add code here
-	Vec3 sample(Sampler* sampler, float& pdf)
-	{
+	Vec3 sample(Sampler* sampler, float& pdf) {
 		return Vec3(0, 0, 0);
 	}
-	Vec3 gNormal()
-	{
+
+	Vec3 gNormal() {
 		return (n * (Dot(vertices[0].normal, n) > 0 ? 1.0f : -1.0f));
 	}
 };
 
-class AABB
-{
+class AABB {
 public:
 	Vec3 max;
 	Vec3 min;
-	AABB()
-	{
+
+	AABB() {
 		reset();
 	}
-	void reset()
-	{
+
+	void reset() {
 		max = Vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 		min = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
 	}
-	void extend(const Vec3 p)
-	{
+
+	void extend(const Vec3 p) {
 		max = Max(max, p);
 		min = Min(min, p);
 	}
+
 	// Add code here
-	bool rayAABB(const Ray& r, float& t)
-	{
+	bool rayAABB(const Ray& r, float& t) {
 		return true;
 	}
+
 	// Add code here
-	bool rayAABB(const Ray& r)
-	{
+	bool rayAABB(const Ray& r) {
 		return true;
 	}
+
 	// Add code here
-	float area()
-	{
+	float area() {
 		Vec3 size = max - min;
 		return ((size.x * size.y) + (size.y * size.z) + (size.x * size.z)) * 2.0f;
 	}
 };
 
-class Sphere
-{
+class Sphere {
 public:
 	Vec3 centre;
 	float radius;
-	void init(Vec3& _centre, float _radius)
-	{
+
+	void init(Vec3& _centre, float _radius) {
 		centre = _centre;
 		radius = _radius;
 	}
+
 	// Add code here
-	bool rayIntersect(Ray& r, float& t)
-	{
+	bool rayIntersect(Ray& r, float& t) {
 		return false;
 	}
 };
