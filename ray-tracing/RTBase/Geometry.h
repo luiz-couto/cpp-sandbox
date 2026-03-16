@@ -35,7 +35,7 @@ public:
 	}
 
 	// Add code here
-	bool rayIntersect(const Ray& r, float& t) {
+	bool rayIntersect(const Ray& r, float& t) const {
 		float nDotOPlusD = -(n.dot(r.o) + d);
 		float nDotDir = n.dot(r.dir);
 		t = nDotOPlusD / nDotDir;
@@ -44,7 +44,7 @@ public:
 	}
 };
 
-#define EPSILON 0.001f
+#define EPSILON 0.00001f
 
 class Triangle {
 public:
@@ -53,8 +53,10 @@ public:
 	Vec3 e2; // Edge 2
 	Vec3 n; // Geometric Normal
 	float area; // Triangle area
+	float invArea;
 	float d; // For ray triangle if needed
 	unsigned int materialIndex;
+	Plane trianglePlane;
 
 	Triangle() {}
 
@@ -67,7 +69,9 @@ public:
 		e2 = vertices[0].p - vertices[2].p;
 		n = e1.cross(e2).normalize();
 		area = e1.cross(e2).length() * 0.5f;
+		invArea = 1.0f / area;
 		d = Dot(n, vertices[0].p);
+		trianglePlane.init(n, -d);
 	}
 
 	Vec3 centre() const {
@@ -76,32 +80,54 @@ public:
 
 	// Add code here
 	bool rayIntersect(const Ray& r, float& t, float& u, float& v) const {
-		Plane plane = Plane();
-		Vec3 nPlane(this->n);
-		plane.init(nPlane, -d);
+		float intersection;
+		bool planeIntersect = trianglePlane.rayIntersect(r, intersection);
 
-		if (!plane.rayIntersect(r, t)) {
+		if (!planeIntersect) {
 			return false;
 		}
-
-		float intersection;
-		plane.rayIntersect(r, intersection);
 
 		Vec3 intersectionPoint = r.at(intersection);
 		Vec3 q1 = intersectionPoint - vertices[1].p;
 		Vec3 c1 = e1.cross(q1);
 
-		float alpha = c1.dot(n) / area;
+		float alpha = c1.dot(n) * invArea;
 
 		Vec3 q2 = intersectionPoint - vertices[2].p;
 		Vec3 c2 = e2.cross(q2);
 
-		float beta = c2.dot(n) / area;
+		float beta = c2.dot(n) * invArea;
 
 		u = alpha;
 		v = beta;
 
 		return alpha + beta <= 1;
+	}
+
+	bool rayIntersectMollerTrumbore(const Ray& r, float& t, float& u, float& v) const {
+		Vec3 p = r.dir.cross(e2);
+		float det = e1.dot(p);
+
+		if (std::abs(det) < EPSILON) return false;
+
+		Vec3 bigT = r.o - vertices[0].p;
+		float beta = bigT.dot(p) / det;
+
+		if (beta < 0 || beta > 1) return false;
+
+		Vec3 q = bigT.cross(e1);
+		float gamma = r.dir.dot(q) / det;
+
+		if (gamma < 0 || gamma > 1 || beta + gamma > 1) return false;
+
+		t = e2.dot(q) / det;
+		
+		if (t < 0) return false;
+
+		u = beta;
+		v = gamma;
+
+		return true;
 	}
 
 	void interpolateAttributes(const float alpha, const float beta, const float gamma, Vec3& interpolatedNormal, float& interpolatedU, float& interpolatedV) const {

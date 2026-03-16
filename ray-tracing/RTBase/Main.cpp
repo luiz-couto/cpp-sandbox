@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	t.init(v0, v1, v2, 0);
 
 	float tt, tu, tv;
-	bool intersect = t.rayIntersect(r, tt, tu, tv);
+	bool intersect = t.rayIntersectMollerTrumbore(r, tt, tu, tv);
 
 	// float t;
 	// bool intersect = p.rayIntersect(r, t);
