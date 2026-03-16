@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+
 	Scene* scene = loadScene(sceneName);
 	GamesEngineeringBase::Window canvas;
 	canvas.create((unsigned int)scene->camera.width, (unsigned int)scene->camera.height, "Tracer", false);
@@ -67,6 +68,21 @@ int main(int argc, char *argv[])
 	rt.init(scene, &canvas);
 	bool running = true;
 	GamesEngineeringBase::Timer timer;
+
+	Plane p = Plane();
+	Vec3 normal(0, 1, 0);
+	p.init(normal, -1);
+
+	Ray r = Ray();
+	Vec3 origin(0, 0, 0);
+	Vec3 dir(0, 1, 0);
+	r.init(origin, dir);
+
+	float t;
+	bool intersect = p.rayIntersect(r, t);
+
+	std::cout << "Ray intersects plane: " << (intersect ? "Yes" : "No") << ", t = " << t << std::endl;
+
 	while (running)
 	{
 		canvas.checkInput();

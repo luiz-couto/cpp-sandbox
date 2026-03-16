@@ -36,7 +36,11 @@ public:
 
 	// Add code here
 	bool rayIntersect(Ray& r, float& t) {
-		return false;
+		float nDotOPlusD = -(n.dot(r.o) + d);
+		float nDotDir = n.dot(r.dir);
+		t = nDotOPlusD / nDotDir;
+
+		return t >= 0;
 	}
 };
 
