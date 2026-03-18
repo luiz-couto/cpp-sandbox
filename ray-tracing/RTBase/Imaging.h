@@ -6,6 +6,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define __STDC_LIB_EXT1__
 #include "stb_image_write.h"
+#include <algorithm>
 
 // Stop warnings about buffer overruns if size is zero. Size should never be zero and if it is the code handles it.
 #pragma warning( disable : 6386)
@@ -160,14 +161,51 @@ public:
 	unsigned int height;
 	int SPP;
 	ImageFilter* filter;
-	void splat(const float x, const float y, const Colour& L)
-	{
-		// Code to splat a smaple with colour L into the image plane using an ImageFilter
+
+	void splat(const float x, const float y, const Colour& L) {
+		film[(int(y) * width) + int(x)] = L;
 	}
-	void tonemap(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, float exposure = 1.0f)
-	{
+
+	void tonemap(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, float exposure = 1.0f) {
 		// Return a tonemapped pixel at coordinates x, y
+		return filmicTonemap(x, y, r, g, b, exposure);
 	}
+
+	float filmicCFunc(float value) {
+		float A = 0.15;
+		float B = 0.50;
+		float C = 0.10;
+		float D = 0.20;
+		float E = 0.02;
+		float F = 0.30;
+
+		float v1 = (value * (A * value + C * B) + D * E);
+		float v2 = (value * (A * value + B) + D * F);
+		float v3 = E / F;
+
+		return (v1/v2) - v3;
+	}
+
+	void filmicTonemap(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, float exposure = 1.0f) {
+		Colour curr = film[(y * width) + x];
+		float expFac = 1 / 2.2;
+		float W = 11.2;
+		float CW = filmicCFunc(W);
+		
+		float CR = filmicCFunc(curr.r);
+		float rOut =  powf((CR / CW), expFac);
+
+		float CG = filmicCFunc(curr.g);
+		float gOut =  powf((CG / CW), expFac);
+
+		float CB = filmicCFunc(curr.b);
+		float bOut = powf((CB / CW), expFac);
+
+		r = std::clamp(rOut, 0.f, 1.f) * 255;
+		g = std::clamp(gOut, 0.f, 1.f) * 255;
+		b = std::clamp(bOut, 0.f, 1.f) * 255;
+	}
+
 	// Do not change any code below this line
 	void init(int _width, int _height, ImageFilter* _filter)
 	{
