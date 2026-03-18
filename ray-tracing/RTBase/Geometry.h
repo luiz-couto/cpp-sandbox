@@ -108,16 +108,16 @@ public:
 
 	bool rayIntersectMollerTrumbore(const Ray& r, float& t, float& u, float& v) const {
 		Vec3 p = r.dir.cross(e2);
-		float det = e1.dot(p);
+		float det = -e1.dot(p);
 
 		if (std::abs(det) < EPSILON) return false;
 
-		Vec3 bigT = r.o - vertices[1].p;
+		Vec3 bigT = r.o - vertices[2].p;
 		float beta = bigT.dot(p) / det;
 
 		if (beta < 0 || beta > 1) return false;
 
-		Vec3 q = bigT.cross(e1);
+		Vec3 q = bigT.cross(-e1);
 		float gamma = r.dir.dot(q) / det;
 
 		if (gamma < 0 || gamma > 1 || beta + gamma > 1) return false;

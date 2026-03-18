@@ -107,7 +107,7 @@ public:
 			float t;
 			float u;
 			float v;
-			if (triangles[i].rayIntersect(ray, t, u, v))
+			if (triangles[i].rayIntersectMollerTrumbore(ray, t, u, v))
 			{
 				if (t < intersection.t)
 				{
