@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	// runTests()
 	
 	// Initialize default parameters
-	std::string sceneName = "cornell-box";
+	std::string sceneName = "scenes/cornell-box";
 	std::string filename = "GI.hdr";
 	unsigned int SPP = 8192;
 
@@ -69,29 +69,29 @@ int main(int argc, char *argv[])
 	bool running = true;
 	GamesEngineeringBase::Timer timer;
 
-	Plane p = Plane();
-	Vec3 normal(0, 1, 0);
-	p.init(normal, -1);
+	// Plane p = Plane();
+	// Vec3 normal(0, 1, 0);
+	// p.init(normal, -1);
 
-	Ray r = Ray();
-	Vec3 origin(0, 0, 0);
-	Vec3 dir(0, 1, 0);
-	r.init(origin, dir);
+	// Ray r = Ray();
+	// Vec3 origin(0, 0, 0);
+	// Vec3 dir(0, 1, 0);
+	// r.init(origin, dir);
 
-	Triangle t;
-	Vertex v0(Vec3(-1, 1, -1), Vec3(0, 1, 0), 1, 0);
-	Vertex v1(Vec3(1, 1, -1), Vec3(0, 1, 0), 1, 0);
-	Vertex v2(Vec3(0, 1, 1), Vec3(0, 1, 0), 1, 0);
+	// Triangle t;
+	// Vertex v0(Vec3(-1, 1, -1), Vec3(0, 1, 0), 1, 0);
+	// Vertex v1(Vec3(1, 1, -1), Vec3(0, 1, 0), 1, 0);
+	// Vertex v2(Vec3(0, 1, 1), Vec3(0, 1, 0), 1, 0);
 
-	t.init(v0, v1, v2, 0);
+	// t.init(v0, v1, v2, 0);
 
-	float tt, tu, tv;
-	bool intersect = t.rayIntersectMollerTrumbore(r, tt, tu, tv);
+	// float tt, tu, tv;
+	// bool intersect = t.rayIntersectMollerTrumbore(r, tt, tu, tv);
 
-	// float t;
-	// bool intersect = p.rayIntersect(r, t);
+	// // float t;
+	// // bool intersect = p.rayIntersect(r, t);
 
-	std::cout << "Ray intersects plane: " << (intersect ? "Yes" : "No") << ", t = " << tt << std::endl;
+	// std::cout << "Ray intersects plane: " << (intersect ? "Yes" : "No") << ", t = " << tt << std::endl;
 
 	while (running)
 	{

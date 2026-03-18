@@ -44,7 +44,7 @@ public:
 	}
 };
 
-#define EPSILON 0.00001f
+#define EPSILON 0.001f
 
 class Triangle {
 public:
@@ -69,7 +69,7 @@ public:
 		e2 = vertices[0].p - vertices[2].p;
 		n = e1.cross(e2).normalize();
 		area = e1.cross(e2).length() * 0.5f;
-		invArea = 1.0f / area;
+		invArea = 1.0f / (area * 2.0f);
 		d = Dot(n, vertices[0].p);
 		trianglePlane.init(n, -d);
 	}
@@ -91,17 +91,19 @@ public:
 		Vec3 q1 = intersectionPoint - vertices[1].p;
 		Vec3 c1 = e1.cross(q1);
 
-		float alpha = c1.dot(n) * invArea;
+		u = c1.dot(n) * invArea;
 
 		Vec3 q2 = intersectionPoint - vertices[2].p;
 		Vec3 c2 = e2.cross(q2);
 
-		float beta = c2.dot(n) * invArea;
+		v = c2.dot(n) * invArea;
 
-		u = alpha;
-		v = beta;
+		t = intersection;
 
-		return alpha + beta <= 1;
+		if (u < 0 || u > 1) return false;
+		if (v < 0 || v > 1) return false;
+
+		return ((u + v) <= 1);
 	}
 
 	bool rayIntersectMollerTrumbore(const Ray& r, float& t, float& u, float& v) const {
@@ -110,7 +112,7 @@ public:
 
 		if (std::abs(det) < EPSILON) return false;
 
-		Vec3 bigT = r.o - vertices[0].p;
+		Vec3 bigT = r.o - vertices[1].p;
 		float beta = bigT.dot(p) / det;
 
 		if (beta < 0 || beta > 1) return false;
@@ -168,20 +170,18 @@ public:
 
 	// Add code here
 	bool rayAABB(const Ray& r, float& t) {
-		float tMinX = (min.x - r.o.x) / r.dir.x;
-		float tMinY = (min.y - r.o.y) / r.dir.y;
-		float tMinZ = (min.z - r.o.z) / r.dir.z;
+		Vec3 tMin = (min - r.o) * (r.invDir);
+		Vec3 tMax = (max - r.o) * (r.invDir);
 
-		float yMaxX = (max.x - r.o.x) / r.dir.x;
-		float yMaxY = (max.y - r.o.y) / r.dir.y;
-		float yMaxZ = (max.z - r.o.z) / r.dir.z;
+		Vec3 tEntry = Min(tMin, tMax);
+		Vec3 tExit = Max(tMin, tMax);
 
-		float tEntry = std::max(tMinX, std::max(tMinY, tMinZ));
-		float tExit = std::min(tMinX, std::min(tMinY, tMinZ));
+		float entryVal = std::max({ tEntry.x, tEntry.y, tEntry.z });
+		float exitVal = std::min({ tExit.x, tExit.y, tExit.z });
 
-		if (tEntry <= tExit && tExit >= 0) return true;
+		t = std::min(entryVal, exitVal); // use this in the one that returns t
 
-		return false;
+		return (entryVal <= exitVal && exitVal > 0);
 	}
 
 	// Add code here

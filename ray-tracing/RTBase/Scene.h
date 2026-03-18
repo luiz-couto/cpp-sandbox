@@ -30,6 +30,7 @@ public:
 		float Hlens = Wlens * aspect;
 		Afilm = Wlens * Hlens;
 	}
+
 	void updateView(Matrix V)
 	{
 		camera = V;
@@ -39,12 +40,20 @@ public:
 		viewDirection = camera.mulVec(viewDirection);
 		viewDirection = viewDirection.normalize();
 	}
+
 	// Add code here
-	Ray generateRay(float x, float y)
-	{
-		Vec3 dir(0, 0, 1);
-		return Ray(origin, dir);
+	Ray generateRay(float x, float y) {
+		float xc = ((2 * x) / (width - 1)) - 1;
+		float yc = -(((2 * y) / (height - 1)) - 1);
+		float zc = 0;
+
+		Vec3 pclip(xc, yc, zc);
+		Vec3 dCamera = inverseProjectionMatrix.mulPointAndPerspectiveDivide(pclip);
+
+		Vec3 rayDir = camera.mulVec(dCamera).normalize();
+		return Ray(origin, rayDir);
 	}
+
 	bool projectOntoCamera(const Vec3& p, float& x, float& y)
 	{
 		Vec3 pview = cameraToView.mulPoint(p);
