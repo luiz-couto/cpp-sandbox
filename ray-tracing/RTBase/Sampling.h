@@ -29,34 +29,34 @@ public:
 class SamplingDistributions
 {
 public:
-	static Vec3 uniformSampleHemisphere(float r1, float r2)
-	{
-		// Add code here
-		return Vec3(0, 0, 1);
+	static Vec3 uniformSampleHemisphere(float r1, float r2) {
+		float theta = acosf(r1);
+		float phi = 2 * M_PI * r2;
+		return SphericalCoordinates::sphericalToWorld(theta, phi);
 	}
-	static float uniformHemispherePDF(const Vec3 wi)
-	{
-		// Add code here
-		return 1.0f;
+
+	static float uniformHemispherePDF(const Vec3 wi) {
+		return 1.0f / 2 * M_PI;
 	}
-	static Vec3 cosineSampleHemisphere(float r1, float r2)
-	{
-		// Add code here
-		return Vec3(0, 0, 1);
+
+	static Vec3 cosineSampleHemisphere(float r1, float r2) {
+		float theta = acosf(sqrtf(r1));
+		float phi = 2 * M_PI * r2;
+		return SphericalCoordinates::sphericalToWorld(theta, phi);
 	}
-	static float cosineHemispherePDF(const Vec3 wi)
-	{
-		// Add code here
-		return 1.0f;
+
+	static float cosineHemispherePDF(const Vec3 wi) {
+		// cos theta is the same as the z coordinate of wi
+		return wi.z / M_PI;
 	}
-	static Vec3 uniformSampleSphere(float r1, float r2)
-	{
-		// Add code here
-		return Vec3(0, 0, 1);
+
+	static Vec3 uniformSampleSphere(float r1, float r2) {
+		float theta = acosf(1 - (2 * r1));
+		float phi = 2 * M_PI * r2;
+		return SphericalCoordinates::sphericalToWorld(theta, phi);
 	}
-	static float uniformSpherePDF(const Vec3& wi)
-	{
-		// Add code here
-		return 1.0f;
+
+	static float uniformSpherePDF(const Vec3& wi) {
+		return 1.0f / 4 * M_PI;
 	}
 };
