@@ -153,6 +153,18 @@ public:
 	}
 };
 
+class GaussianFilter : public ImageFilter {
+public:
+	float filter(float x, float y) const {
+		
+	}
+
+	// change this later
+	int size() const {
+		return 1;
+	}
+};
+
 class Film
 {
 public:
