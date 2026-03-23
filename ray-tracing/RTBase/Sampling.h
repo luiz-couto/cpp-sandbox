@@ -39,7 +39,18 @@ public:
 		return 1.0f / 2 * M_PI;
 	}
 
+	static Vec3 cosineSampleHemisphereByDisk(float r1, float r2) {
+		float r = sqrtf(r1);
+		float theta = 2 * M_PI * r2;
+		float x = r * cosf(theta);
+		float y = r * sinf(theta);
+		float z = sqrtf(1 - (x * x) - (y * y));
+		return Vec3(x, y, z);
+	}
+
 	static Vec3 cosineSampleHemisphere(float r1, float r2) {
+		// Implement uniform sample disk to calculate this!
+
 		float theta = acosf(sqrtf(r1));
 		float phi = 2 * M_PI * r2;
 		return SphericalCoordinates::sphericalToWorld(theta, phi);
@@ -60,3 +71,5 @@ public:
 		return 1.0f / 4 * M_PI;
 	}
 };
+
+// Sampling code for triangles
