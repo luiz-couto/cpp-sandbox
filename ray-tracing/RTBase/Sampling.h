@@ -73,3 +73,14 @@ public:
 };
 
 // Sampling code for triangles
+
+// Importance Sampling is also very important. It reduces a lot of the variance. 
+// It depends on how well the distribution matches the function we are integrating.
+
+// Stratified samplifing is also important, but it depends if you can subdvide your
+// domaain into equal parts. It can be used to reduce variance by ensuring that you
+// get samples from all parts of the domain.
+
+// Multiple Importance Sampling must be implemented! Weights the samples. Wights must#
+// sum to 1.0f. Any weight can be used (negative are allowed). Generate samples from 
+// which function. You weight them (balance heuristic maybe). Estimate them.
