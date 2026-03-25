@@ -40,10 +40,37 @@ public:
 	Colour computeDirect(ShadingData shadingData, Sampler* sampler)
 	{
 		// Is surface is specular we cannot computing direct lighting
-		if (shadingData.bsdf->isPureSpecular() == true)
-		{
+		if (shadingData.bsdf->isPureSpecular() == true) {
 			return Colour(0.0f, 0.0f, 0.0f);
 		}
+		
+		float pmf;
+		Light *sampledLight = scene->sampleLight(sampler, pmf);
+
+		if (sampledLight->isArea()) {
+			Colour emittedColour;
+			float pdf;
+			Vec3 sampledPoint = sampledLight->sample(shadingData, sampler, emittedColour, pdf);
+
+			Vec3 wi = sampledPoint - shadingData.x;
+			float cosTheta = shadingData.sNormal.dot(wi);
+
+			Vec3 normalLine = sampledLight->normal(shadingData, wi);
+			float cosThetaLine = -wi.dot(normalLine);
+
+			float denominator = (shadingData.x - sampledPoint).lengthSq();
+
+			float gTerm = (cosTheta * cosThetaLine) / denominator;
+			bool isVisible = scene->visible(shadingData.x, sampledPoint);
+
+			float resultGTerm = gTerm * isVisible;
+
+			Colour finalColor = shadingData.bsdf->evaluate(shadingData, wi) * emittedColour * resultGTerm;
+
+			return finalColor / pdf;
+		}
+
+
 		// Compute direct lighting here
 		return Colour(0.0f, 0.0f, 0.0f);
 	}
@@ -54,8 +81,19 @@ public:
 	}
 	Colour direct(Ray& r, Sampler* sampler)
 	{
-		// Compute direct lighting for an image sampler here
-		return Colour(0.0f, 0.0f, 0.0f);
+
+		IntersectionData intersection = scene->traverse(r);
+		ShadingData shadingData = scene->calculateShadingData(intersection, r);
+		if (shadingData.t < FLT_MAX)
+		{
+			if (shadingData.bsdf->isLight())
+			{
+				return shadingData.bsdf->emit(shadingData, shadingData.wo);
+			}
+	
+			return computeDirect(shadingData, sampler);
+		}
+		return scene->background->evaluate(r.dir);
 	}
 	Colour albedo(Ray& r)
 	{
@@ -91,8 +129,9 @@ public:
 				float px = x + 0.5f;
 				float py = y + 0.5f;
 				Ray ray = scene->camera.generateRay(px, py);
-				Colour col = viewNormals(ray);
+				//Colour col = viewNormals(ray);
 				//Colour col = albedo(ray);
+				Colour col = direct(ray, &samplers[0]);
 				film->splat(px, py, col);
 				unsigned char r = (unsigned char)(col.r * 255);
 				unsigned char g = (unsigned char)(col.g * 255);

@@ -175,6 +175,7 @@ public:
 	ImageFilter* filter;
 
 	void splat(const float x, const float y, const Colour& L) {
+		// Need this!
 		film[(int(y) * width) + int(x)] = L;
 	}
 

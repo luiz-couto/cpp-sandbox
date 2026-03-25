@@ -138,6 +138,8 @@ public:
 	Vec3 sample(const ShadingData& shadingData, Sampler* sampler, Colour& reflectedColour, float& pdf)
 	{
 		// Assignment: Update this code to importance sampling lighting based on luminance of each pixel
+		// High variance! Need to modify this
+		// Also incorporate sin (theta) into F[u, v]!
 		Vec3 wi = SamplingDistributions::uniformSampleSphere(sampler->next(), sampler->next());
 		pdf = SamplingDistributions::uniformSpherePDF(wi);
 		reflectedColour = evaluate(wi);
@@ -172,7 +174,7 @@ public:
 			float st = sinf(((float)i / (float)env->height) * M_PI);
 			for (int n = 0; n < env->width; n++)
 			{
-				total += (env->texels[(i * env->width) + n].Lum() * st);
+				total += (env->texels[(i * env->width) + n].Lum() * st); // Is this a way of getting kind of the area of the scene?
 			}
 		}
 		total = total / (float)(env->width * env->height);

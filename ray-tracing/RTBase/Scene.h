@@ -128,6 +128,11 @@ public:
 		return lights[(int)(sampler->next() * lights.size())];
 	}
 
+	// Can implement the weighted sampling of lights
+	Light* sampleLightWeighted(Sampler* sampler, float& pmf) {
+		//lights[0]->totalIntegratedPower();
+	}
+
 	// Do not modify any code below this line
 	void init(std::vector<Triangle> meshTriangles, std::vector<BSDF*> meshMaterials, Light* _background) {
 		for (int i = 0; i < meshTriangles.size(); i++)
