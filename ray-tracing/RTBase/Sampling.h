@@ -29,17 +29,20 @@ public:
 class SamplingDistributions
 {
 public:
-	static Vec3 uniformSampleHemisphere(float r1, float r2) {
+	static Vec3 uniformSampleHemisphere(float r1, float r2)
+	{
 		float theta = acosf(r1);
 		float phi = 2 * M_PI * r2;
 		return SphericalCoordinates::sphericalToWorld(theta, phi);
 	}
 
-	static float uniformHemispherePDF(const Vec3 wi) {
+	static float uniformHemispherePDF(const Vec3 wi)
+	{
 		return 1.0f / 2 * M_PI;
 	}
 
-	static Vec3 cosineSampleHemisphereByDisk(float r1, float r2) {
+	static Vec3 cosineSampleHemisphereByDisk(float r1, float r2)
+	{
 		float r = sqrtf(r1);
 		float theta = 2 * M_PI * r2;
 		float x = r * cosf(theta);
@@ -48,7 +51,8 @@ public:
 		return Vec3(x, y, z);
 	}
 
-	static Vec3 cosineSampleHemisphere(float r1, float r2) {
+	static Vec3 cosineSampleHemisphere(float r1, float r2)
+	{
 		// Implement uniform sample disk to calculate this!
 
 		float theta = acosf(sqrtf(r1));
@@ -56,25 +60,28 @@ public:
 		return SphericalCoordinates::sphericalToWorld(theta, phi);
 	}
 
-	static float cosineHemispherePDF(const Vec3 wi) {
+	static float cosineHemispherePDF(const Vec3 wi)
+	{
 		// cos theta is the same as the z coordinate of wi
 		return wi.z / M_PI;
 	}
 
-	static Vec3 uniformSampleSphere(float r1, float r2) {
+	static Vec3 uniformSampleSphere(float r1, float r2)
+	{
 		float theta = acosf(1 - (2 * r1));
 		float phi = 2 * M_PI * r2;
 		return SphericalCoordinates::sphericalToWorld(theta, phi);
 	}
 
-	static float uniformSpherePDF(const Vec3& wi) {
+	static float uniformSpherePDF(const Vec3 &wi)
+	{
 		return 1.0f / 4 * M_PI;
 	}
 };
 
-// Sampling code for triangles
+// Implement Sampling code for triangles?
 
-// Importance Sampling is also very important. It reduces a lot of the variance. 
+// Importance Sampling is also very important. It reduces a lot of the variance.
 // It depends on how well the distribution matches the function we are integrating.
 
 // Stratified samplifing is also important, but it depends if you can subdvide your
@@ -82,5 +89,22 @@ public:
 // get samples from all parts of the domain.
 
 // Multiple Importance Sampling must be implemented! Weights the samples. Wights must#
-// sum to 1.0f. Any weight can be used (negative are allowed). Generate samples from 
+// sum to 1.0f. Any weight can be used (negative are allowed). Generate samples from
 // which function. You weight them (balance heuristic maybe). Estimate them.
+
+// BVH Implementation
+// BVH in parallel
+
+// Env Lighting
+// Tabulated sampling - calcuate- sunm up rows, column vector - binary search it etc
+
+// Filters
+// Gaussian Filters
+
+// Multithreading
+
+// Implement tabulated marginal and conditional distributions and sampling
+
+// Latin Hypercube Sampling for random number generation.
+
+// Poison disk sampling can be good for PCG
