@@ -121,13 +121,15 @@ public:
 		}
 		return intersection;
 	}
-	Light* sampleLight(Sampler* sampler, float& pmf)
-	{
-		return NULL;
+
+	Light* sampleLight(Sampler* sampler, float& pmf) {
+		// return a random light from the scene and set the pmf to the probability of sampling that light
+		pmf = 1.0f / lights.size();
+		return lights[(int)(sampler->next() * lights.size())];
 	}
+
 	// Do not modify any code below this line
-	void init(std::vector<Triangle> meshTriangles, std::vector<BSDF*> meshMaterials, Light* _background)
-	{
+	void init(std::vector<Triangle> meshTriangles, std::vector<BSDF*> meshMaterials, Light* _background) {
 		for (int i = 0; i < meshTriangles.size(); i++)
 		{
 			triangles.push_back(meshTriangles[i]);
@@ -145,8 +147,8 @@ public:
 			lights.push_back(background);
 		}
 	}
-	bool visible(const Vec3& p1, const Vec3& p2)
-	{
+	
+	bool visible(const Vec3& p1, const Vec3& p2) {
 		Ray ray;
 		Vec3 dir = p2 - p1;
 		float maxT = dir.length() - (2.0f * EPSILON);
@@ -154,12 +156,12 @@ public:
 		ray.init(p1 + (dir * EPSILON), dir);
 		return bvh->traverseVisible(ray, triangles, maxT);
 	}
-	Colour emit(Triangle* light, ShadingData shadingData, Vec3 wi)
-	{
+
+	Colour emit(Triangle* light, ShadingData shadingData, Vec3 wi) {
 		return materials[light->materialIndex]->emit(shadingData, wi);
 	}
-	ShadingData calculateShadingData(IntersectionData intersection, Ray& ray)
-	{
+
+	ShadingData calculateShadingData(IntersectionData intersection, Ray& ray) {
 		ShadingData shadingData = {};
 		if (intersection.t < FLT_MAX)
 		{
