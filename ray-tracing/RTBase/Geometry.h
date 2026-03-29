@@ -70,7 +70,7 @@ public:
 		e2 = vertices[0].p - vertices[2].p;
 		n = e1.cross(e2).normalize();
 		area = e1.cross(e2).length() * 0.5f;
-		invArea = 1.0f / (area);
+		invArea = 1.0f / (area * 2.0f);
 		d = Dot(n, vertices[0].p);
 		trianglePlane.init(n, -d);
 		centroid = centre();
@@ -281,8 +281,8 @@ public:
 	int getTriangleBinIdx(Triangle &triangle, std::vector<Bin> &bins, int axis) {
 		float triangleCoord = triangle.centroid.coords[axis];
 		for (int i=0; i<BUILD_BINS; i++) {
-			if (triangleCoord >= bins[i].start && 
-				triangleCoord < bins[i].end) {
+			if (triangleCoord >= bins[i].bounds.min.coords[axis] && 
+				triangleCoord < bins[i].bounds.max.coords[axis]) {
 				return i;
 			}
 		}
@@ -293,14 +293,12 @@ public:
 	void build(std::vector<Triangle> &inputTriangles, int start, int count) {
 		// This part "shrinks" the BB acourding to the triangles
 		for (int i=start; i<(start+count); i++) {
-			bounds.extend(inputTriangles[i].vertices[0].p);
-			bounds.extend(inputTriangles[i].vertices[1].p);
-			bounds.extend(inputTriangles[i].vertices[2].p);
+			bounds.extend(inputTriangles[i].centroid);
 		}
 
-		float lowestSplitCost = FLT_MAX;
-		int bestBinIdx = BUILD_BINS / 2;
-		int splitAxis = 0;
+		int lowestSplitCost = FLT_MAX;
+		AABB bestBounds;
+		int splitAxis;
 
 		// For each axis (0 = x, 1 = y, 2 = z)
 		for (int axis=0; axis<3; axis++) {
@@ -308,7 +306,7 @@ public:
 			float minInAxis = bounds.min.coords[axis];
 			float maxInAxis = bounds.max.coords[axis];
 
-			float stepSize = (maxInAxis - minInAxis) / BUILD_BINS;
+			int stepSize = (maxInAxis - minInAxis) / BUILD_BINS;
 
 			std::vector<Bin> bins;
 			bins.resize(BUILD_BINS);
@@ -322,7 +320,7 @@ public:
 				else endBin = startBin + stepSize;
 
 				AABB binBoundBox;
-				bins[i] = { startBin, endBin, binBoundBox, 0 };
+				bins.push_back({ startBin, endBin, binBoundBox, 0 });
 			}
 
 			// Assign triangles into the bins and extend bins BB accordingly
@@ -339,11 +337,12 @@ public:
 			leftSweep.resize(BUILD_BINS);
 			for (int i=0; i<BUILD_BINS; i++) {
 				totalNumTriangles += bins[i].numTriangles;
-				if (bins[i].numTriangles > 0) {
-					boundBoxAcc.extend(bins[i].bounds.min);
-					boundBoxAcc.extend(bins[i].bounds.max);
-				}
-				leftSweep[i] = { boundBoxAcc, totalNumTriangles };
+				boundBoxAcc.extend(bins[i].bounds.min);
+				boundBoxAcc.extend(bins[i].bounds.max);
+				
+				AABB sweepBB = boundBoxAcc;
+				int sweepNumTriangles = totalNumTriangles;
+				leftSweep.push_back({ sweepBB, sweepNumTriangles });
 			}
 
 			// Right to left sweep
@@ -353,32 +352,29 @@ public:
 			rightSweep.resize(BUILD_BINS);
 			for (int i=BUILD_BINS - 1; i>=0; i--) {
 				totalNumTriangles += bins[i].numTriangles;
-				if (bins[i].numTriangles > 0) {
-					boundBoxAcc.extend(bins[i].bounds.min);
-					boundBoxAcc.extend(bins[i].bounds.max);
-				}
-				rightSweep[i] = { boundBoxAcc, totalNumTriangles };
+				boundBoxAcc.extend(bins[i].bounds.min);
+				boundBoxAcc.extend(bins[i].bounds.max);
+				
+				AABB sweepBB = boundBoxAcc;
+				int sweepNumTriangles = totalNumTriangles;
+				rightSweep.push_back({ sweepBB, sweepNumTriangles });
 			}
 
 			// Calculate split costs and find the lowest
-			// Split at i means: left = bins[0..i], right = bins[i+1..BUILD_BINS-1]
-			for (int i=0; i<BUILD_BINS - 1; i++) {
-				if (leftSweep[i].numTriangles == 0 || rightSweep[i + 1].numTriangles == 0) continue;
+			for (int i=0; i<BUILD_BINS; i++) {
 				float leftCost = (leftSweep[i].bounds.area() / bounds.area()) * leftSweep[i].numTriangles * C_ISECT_COST;
-				float rightCost = (rightSweep[i + 1].bounds.area() / bounds.area()) * rightSweep[i + 1].numTriangles * C_ISECT_COST;
+				float rightCost = (rightSweep[i].bounds.area() / bounds.area()) * rightSweep[i].numTriangles * C_ISECT_COST;
 				float splitCost = BOUNDS_COST + leftCost + rightCost;
 				if (splitCost < lowestSplitCost) {
 					lowestSplitCost = splitCost;
-					bestBinIdx = i;
+					bestBounds = bins[i].bounds;
 					splitAxis = axis;
 				}
 			}
 		}
 
-		// split triangles into the two spaces using the bin boundary
-		float splitPos = 
-			bounds.min.coords[splitAxis] + (bestBinIdx + 1) * 
-			((bounds.max.coords[splitAxis] - bounds.min.coords[splitAxis]) / BUILD_BINS);
+		// split triangles into the two spaces
+		float splitPos = bestBounds.max.coords[splitAxis];
 
 		auto mid = std::partition(
 			inputTriangles.begin() + start,
