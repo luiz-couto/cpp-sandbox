@@ -84,6 +84,8 @@ public:
 	void build()
 	{
 		// Add BVH building code here
+		bvh = new BVHNode();
+		bvh->build(triangles, 0, triangles.size());
 		
 		// Do not touch the code below this line!
 		// Build light list
@@ -98,28 +100,33 @@ public:
 			}
 		}
 	}
-	IntersectionData traverse(const Ray& ray)
-	{
-		IntersectionData intersection;
-		intersection.t = FLT_MAX;
-		for (int i = 0; i < triangles.size(); i++)
-		{
-			float t;
-			float u;
-			float v;
-			if (triangles[i].rayIntersectMollerTrumbore(ray, t, u, v))
-			{
-				if (t < intersection.t)
-				{
-					intersection.t = t;
-					intersection.ID = i;
-					intersection.alpha = u;
-					intersection.beta = v;
-					intersection.gamma = 1.0f - (u + v);
-				}
-			}
-		}
-		return intersection;
+	
+	// IntersectionData traverse(const Ray& ray)
+	// {
+	// 	IntersectionData intersection;
+	// 	intersection.t = FLT_MAX;
+	// 	for (int i = 0; i < triangles.size(); i++)
+	// 	{
+	// 		float t;
+	// 		float u;
+	// 		float v;
+	// 		if (triangles[i].rayIntersectMollerTrumbore(ray, t, u, v))
+	// 		{
+	// 			if (t < intersection.t)
+	// 			{
+	// 				intersection.t = t;
+	// 				intersection.ID = i;
+	// 				intersection.alpha = u;
+	// 				intersection.beta = v;
+	// 				intersection.gamma = 1.0f - (u + v);
+	// 			}
+	// 		}
+	// 	}
+	// 	return intersection;
+	// }
+
+	IntersectionData traverse(const Ray& ray) {
+		return bvh->traverse(ray, triangles);
 	}
 
 	Light* sampleLight(Sampler* sampler, float& pmf) {
