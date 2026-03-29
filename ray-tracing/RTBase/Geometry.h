@@ -70,7 +70,7 @@ public:
 		e2 = vertices[0].p - vertices[2].p;
 		n = e1.cross(e2).normalize();
 		area = e1.cross(e2).length() * 0.5f;
-		invArea = 1.0f / (area * 2.0f);
+		invArea = 1.0f / (area);
 		d = Dot(n, vertices[0].p);
 		trianglePlane.init(n, -d);
 		centroid = centre();
@@ -293,10 +293,12 @@ public:
 	void build(std::vector<Triangle> &inputTriangles, int start, int count) {
 		// This part "shrinks" the BB acourding to the triangles
 		for (int i=start; i<(start+count); i++) {
-			bounds.extend(inputTriangles[i].centroid);
+			bounds.extend(inputTriangles[i].vertices[0].p);
+			bounds.extend(inputTriangles[i].vertices[1].p);
+			bounds.extend(inputTriangles[i].vertices[2].p);
 		}
 
-		int lowestSplitCost = FLT_MAX;
+		float lowestSplitCost = FLT_MAX;
 		AABB bestBounds;
 		int splitAxis;
 
@@ -306,7 +308,7 @@ public:
 			float minInAxis = bounds.min.coords[axis];
 			float maxInAxis = bounds.max.coords[axis];
 
-			int stepSize = (maxInAxis - minInAxis) / BUILD_BINS;
+			float stepSize = (maxInAxis - minInAxis) / BUILD_BINS;
 
 			std::vector<Bin> bins;
 			bins.resize(BUILD_BINS);
@@ -320,7 +322,7 @@ public:
 				else endBin = startBin + stepSize;
 
 				AABB binBoundBox;
-				bins.push_back({ startBin, endBin, binBoundBox, 0 });
+				bins[i] = { startBin, endBin, binBoundBox, 0 };
 			}
 
 			// Assign triangles into the bins and extend bins BB accordingly
@@ -342,7 +344,7 @@ public:
 				
 				AABB sweepBB = boundBoxAcc;
 				int sweepNumTriangles = totalNumTriangles;
-				leftSweep.push_back({ sweepBB, sweepNumTriangles });
+				leftSweep[i] = { sweepBB, sweepNumTriangles };
 			}
 
 			// Right to left sweep
@@ -357,13 +359,13 @@ public:
 				
 				AABB sweepBB = boundBoxAcc;
 				int sweepNumTriangles = totalNumTriangles;
-				rightSweep.push_back({ sweepBB, sweepNumTriangles });
+				rightSweep[i] = { sweepBB, sweepNumTriangles };
 			}
 
 			// Calculate split costs and find the lowest
 			for (int i=0; i<BUILD_BINS; i++) {
 				float leftCost = (leftSweep[i].bounds.area() / bounds.area()) * leftSweep[i].numTriangles * C_ISECT_COST;
-				float rightCost = (rightSweep[i].bounds.area() / bounds.area()) * rightSweep[i].numTriangles * C_ISECT_COST;
+				float rightCost = (rightSweep[BUILD_BINS - 1 - i].bounds.area() / bounds.area()) * rightSweep[BUILD_BINS - 1 - i].numTriangles * C_ISECT_COST;
 				float splitCost = BOUNDS_COST + leftCost + rightCost;
 				if (splitCost < lowestSplitCost) {
 					lowestSplitCost = splitCost;
@@ -422,7 +424,7 @@ public:
 				float t;
 				float u;
 				float v;
-				if (triangles[i].rayIntersectMollerTrumbore(ray, t, u, v))
+				if (triangles[i].rayIntersect(ray, t, u, v))
 				{
 					if (t < intersection.t)
 					{
