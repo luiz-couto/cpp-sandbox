@@ -293,10 +293,12 @@ public:
 	void build(std::vector<Triangle> &inputTriangles, int start, int count) {
 		// This part "shrinks" the BB acourding to the triangles
 		for (int i=start; i<(start+count); i++) {
-			bounds.extend(inputTriangles[i].centroid);
+			bounds.extend(inputTriangles[i].vertices[0].p);
+			bounds.extend(inputTriangles[i].vertices[1].p);
+			bounds.extend(inputTriangles[i].vertices[2].p);
 		}
 
-		int lowestSplitCost = FLT_MAX;
+		float lowestSplitCost = FLT_MAX;
 		AABB bestBounds;
 		int splitAxis;
 
@@ -320,14 +322,16 @@ public:
 				else endBin = startBin + stepSize;
 
 				AABB binBoundBox;
-				bins.push_back({ startBin, endBin, binBoundBox, 0 });
+				bins[i] = { startBin, endBin, binBoundBox, 0 };
 			}
 
 			// Assign triangles into the bins and extend bins BB accordingly
 			for (int i=start; i<(start + count); i++) {
 				int binIdx = getTriangleBinIdx(inputTriangles[i], bins, axis);
 				bins[binIdx].numTriangles++;
-				bins[binIdx].bounds.extend(inputTriangles[i].centroid);
+				bins[binIdx].bounds.extend(inputTriangles[i].vertices[0].p);
+				bins[binIdx].bounds.extend(inputTriangles[i].vertices[1].p);
+				bins[binIdx].bounds.extend(inputTriangles[i].vertices[2].p);
 			}
 
 			// Left to right sweep
@@ -342,7 +346,7 @@ public:
 				
 				AABB sweepBB = boundBoxAcc;
 				int sweepNumTriangles = totalNumTriangles;
-				leftSweep.push_back({ sweepBB, sweepNumTriangles });
+				leftSweep[i] = { sweepBB, sweepNumTriangles };
 			}
 
 			// Right to left sweep
@@ -357,13 +361,13 @@ public:
 				
 				AABB sweepBB = boundBoxAcc;
 				int sweepNumTriangles = totalNumTriangles;
-				rightSweep.push_back({ sweepBB, sweepNumTriangles });
+				rightSweep[i] = { sweepBB, sweepNumTriangles };
 			}
 
 			// Calculate split costs and find the lowest
 			for (int i=0; i<BUILD_BINS; i++) {
 				float leftCost = (leftSweep[i].bounds.area() / bounds.area()) * leftSweep[i].numTriangles * C_ISECT_COST;
-				float rightCost = (rightSweep[i].bounds.area() / bounds.area()) * rightSweep[i].numTriangles * C_ISECT_COST;
+				float rightCost = (rightSweep[BUILD_BINS - i - 1].bounds.area() / bounds.area()) * rightSweep[BUILD_BINS - i - 1].numTriangles * C_ISECT_COST;
 				float splitCost = BOUNDS_COST + leftCost + rightCost;
 				if (splitCost < lowestSplitCost) {
 					lowestSplitCost = splitCost;
@@ -389,6 +393,15 @@ public:
 		// Create left and right nodes
 		int leftCount = mid - (inputTriangles.begin() + start);
 		int rightCount = (inputTriangles.begin() + start + count) - mid;
+
+		if (leftCount == 0 || rightCount == 0) {
+			isLeaf = true;
+			offset = start;
+			num = count;
+			l = nullptr;
+			r = nullptr;
+			return;
+		}
 
 		BVHNode *leftNode = new BVHNode();
 		l = leftNode;
