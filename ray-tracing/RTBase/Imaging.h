@@ -140,15 +140,16 @@ class BoxFilter : public ImageFilter
 {
 public:
 	float filter(float x, float y) const {
-		if (fabsf(x) < 0.5f && fabs(y) < 0.5f)
-		{
-			return 1.0f;
-		}
-		return 0;
+		// if (fabsf(x) < 0.5f && fabs(y) < 0.5f)
+		// {
+		// 	return 1.0f;
+		// }
+		// return 0;
+		return 1.0f;
 	}
 	int size() const
 	{
-		return 0;
+		return 1;
 	}
 };
 
@@ -174,27 +175,27 @@ public:
 	ImageFilter* filter;
 
 	void splat(const float x, const float y, const Colour& L) {
-		film[(int(y) * width) + int(x)] = L;
-		// float filterWeights[25]; // Storage to cache weights
-		// unsigned int indices[25]; // Store indices to minimize computations
-		// unsigned int used = 0;
-		// float total = 0;
-		// int size = filter->size();
-		// for (int i = -size; i <= size; i++) {
-		// 	for (int j = -size; j <= size; j++) {
-		// 		int px = (int)x + j;
-		// 		int py = (int)y + i;
-		// 		if (px >= 0 && px < width && py >= 0 && py < height) {
-		// 			indices[used] = (py * width) + px;
-		// 			filterWeights[used] = filter->filter(px - x, py - y);
-		// 			total += filterWeights[used];
-		// 			used++;
-		// 		}
-		// 	}
-		// }
-		// for (int i = 0; i < used; i++) {
-		// 	film[indices[i]] = film[indices[i]] + (L * filterWeights[i] / total);
-		// }
+		//film[(int(y) * width) + int(x)] = L;
+		float filterWeights[25]; // Storage to cache weights
+		unsigned int indices[25]; // Store indices to minimize computations
+		unsigned int used = 0;
+		float total = 0;
+		int size = filter->size();
+		for (int i = -size; i <= size; i++) {
+			for (int j = -size; j <= size; j++) {
+				int px = (int)x + j;
+				int py = (int)y + i;
+				if (px >= 0 && px < width && py >= 0 && py < height) {
+					indices[used] = (py * width) + px;
+					filterWeights[used] = filter->filter(px - x, py - y);
+					total += filterWeights[used];
+					used++;
+				}
+			}
+		}
+		for (int i = 0; i < used; i++) {
+			film[indices[i]] = film[indices[i]] + (L * filterWeights[i] / total);
+		}
 	}
 
 	void tonemap(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, float exposure = 1.0f) {
