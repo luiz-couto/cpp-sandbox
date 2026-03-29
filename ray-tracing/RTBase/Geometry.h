@@ -281,8 +281,8 @@ public:
 	int getTriangleBinIdx(Triangle &triangle, std::vector<Bin> &bins, int axis) {
 		float triangleCoord = triangle.centroid.coords[axis];
 		for (int i=0; i<BUILD_BINS; i++) {
-			if (triangleCoord >= bins[i].bounds.min.coords[axis] && 
-				triangleCoord < bins[i].bounds.max.coords[axis]) {
+			if (triangleCoord >= bins[i].start && 
+				triangleCoord < bins[i].end) {
 				return i;
 			}
 		}
