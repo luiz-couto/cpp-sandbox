@@ -271,7 +271,7 @@ public:
 	// This can store an offset and number of triangles in a global triangle list for example
 	// But you can store this however you want!
 	unsigned int offset;
-	unsigned char num;
+	unsigned int num;
 
 	BVHNode() {
 		r = NULL;
@@ -299,8 +299,8 @@ public:
 		}
 
 		float lowestSplitCost = FLT_MAX;
-		AABB bestBounds;
 		int splitAxis;
+		Bin splitBin;
 
 		// For each axis (0 = x, 1 = y, 2 = z)
 		for (int axis=0; axis<3; axis++) {
@@ -371,14 +371,14 @@ public:
 				float splitCost = BOUNDS_COST + leftCost + rightCost;
 				if (splitCost < lowestSplitCost) {
 					lowestSplitCost = splitCost;
-					bestBounds = bins[i].bounds;
 					splitAxis = axis;
+					splitBin = bins[i];
 				}
 			}
 		}
 
 		// split triangles into the two spaces
-		float splitPos = bestBounds.max.coords[splitAxis];
+		float splitPos = splitBin.end;
 
 		auto mid = std::partition(
 			inputTriangles.begin() + start,
@@ -435,7 +435,7 @@ public:
 				float t;
 				float u;
 				float v;
-				if (triangles[i].rayIntersect(ray, t, u, v))
+				if (triangles[i].rayIntersectMollerTrumbore(ray, t, u, v))
 				{
 					if (t < intersection.t)
 					{
@@ -472,7 +472,7 @@ public:
 				float t;
 				float u;
 				float v;
-				if (triangles[i].rayIntersect(ray, t, u, v) && t > 0 && t < maxT) {
+				if (triangles[i].rayIntersectMollerTrumbore(ray, t, u, v) && t > 0 && t < maxT) {
 					return false;
 				}
 			}
