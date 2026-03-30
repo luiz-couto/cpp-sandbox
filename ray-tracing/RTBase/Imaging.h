@@ -153,15 +153,24 @@ public:
 	}
 };
 
+#define GAUSSIAN_RADIUS 2.0f
+
 class GaussianFilter : public ImageFilter {
 public:
 	float filter(float x, float y) const {
-		
+		float gaussianX = gaussian(x, GAUSSIAN_RADIUS);
+		float gaussianY = gaussian(y, GAUSSIAN_RADIUS);
+		return gaussianX * gaussianY;
+	}
+
+	float gaussian(float d, float radius) const {
+		float alpha = 0.35f;
+		return std::expf(-alpha * (d*d)) - std::expf(-alpha * (radius * radius));
 	}
 
 	// change this later
 	int size() const {
-		return 1;
+		return int(GAUSSIAN_RADIUS + 0.5f);
 	}
 };
 
