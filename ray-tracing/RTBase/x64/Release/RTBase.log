@@ -18,8 +18,8 @@ C:\Users\u5706606\Documents\projects\cpp-sandbox\ray-tracing\RTBase\Scene.h(88,4
   (compiling source file 'Main.cpp')
   
   Generating code
-  4 of 2157 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+  3 of 2157 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    33 functions had inline decision re-evaluated but remain unchanged
+    17 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   RTBase.vcxproj -> C:\Users\u5706606\Documents\projects\cpp-sandbox\ray-tracing\x64\Release\RTBase.exe
