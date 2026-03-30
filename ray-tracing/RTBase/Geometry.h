@@ -300,7 +300,7 @@ public:
 
 		float lowestSplitCost = FLT_MAX;
 		int splitAxis;
-		Bin splitBin;
+		Bin splitBin = {};
 
 		// For each axis (0 = x, 1 = y, 2 = z)
 		for (int axis=0; axis<3; axis++) {
@@ -341,12 +341,11 @@ public:
 			leftSweep.resize(BUILD_BINS);
 			for (int i=0; i<BUILD_BINS; i++) {
 				totalNumTriangles += bins[i].numTriangles;
-				boundBoxAcc.extend(bins[i].bounds.min);
-				boundBoxAcc.extend(bins[i].bounds.max);
-				
-				AABB sweepBB = boundBoxAcc;
-				int sweepNumTriangles = totalNumTriangles;
-				leftSweep[i] = { sweepBB, sweepNumTriangles };
+				if (bins[i].numTriangles > 0) {
+					boundBoxAcc.extend(bins[i].bounds.min);
+					boundBoxAcc.extend(bins[i].bounds.max);
+				}
+				leftSweep[i] = { boundBoxAcc, totalNumTriangles };
 			}
 
 			// Right to left sweep
@@ -356,18 +355,18 @@ public:
 			rightSweep.resize(BUILD_BINS);
 			for (int i=BUILD_BINS - 1; i>=0; i--) {
 				totalNumTriangles += bins[i].numTriangles;
-				boundBoxAcc.extend(bins[i].bounds.min);
-				boundBoxAcc.extend(bins[i].bounds.max);
-				
-				AABB sweepBB = boundBoxAcc;
-				int sweepNumTriangles = totalNumTriangles;
-				rightSweep[i] = { sweepBB, sweepNumTriangles };
+				if (bins[i].numTriangles > 0) {
+					boundBoxAcc.extend(bins[i].bounds.min);
+					boundBoxAcc.extend(bins[i].bounds.max);
+				}
+				rightSweep[i] = { boundBoxAcc, totalNumTriangles };
 			}
 
 			// Calculate split costs and find the lowest
-			for (int i=0; i<BUILD_BINS; i++) {
+			for (int i=0; i<BUILD_BINS-1; i++) {
+				if (leftSweep[i].numTriangles == 0 || rightSweep[i+1].numTriangles == 0) continue; // skip empty splits
 				float leftCost = (leftSweep[i].bounds.area() / bounds.area()) * leftSweep[i].numTriangles * C_ISECT_COST;
-				float rightCost = (rightSweep[BUILD_BINS - i - 1].bounds.area() / bounds.area()) * rightSweep[BUILD_BINS - i - 1].numTriangles * C_ISECT_COST;
+				float rightCost = (rightSweep[i+1].bounds.area() / bounds.area()) * rightSweep[i+1].numTriangles * C_ISECT_COST;
 				float splitCost = BOUNDS_COST + leftCost + rightCost;
 				if (splitCost < lowestSplitCost) {
 					lowestSplitCost = splitCost;
@@ -409,24 +408,36 @@ public:
 			leftNode->isLeaf = true;
 			leftNode->offset = start;
 			leftNode->num = leftCount;
+			for (int i=start; i<(start+leftCount); i++) {
+				leftNode->bounds.extend(inputTriangles[i].vertices[0].p);
+				leftNode->bounds.extend(inputTriangles[i].vertices[1].p);
+				leftNode->bounds.extend(inputTriangles[i].vertices[2].p);
+			}
 		} else {
 			leftNode->build(inputTriangles, start, leftCount);
 		}
+
+		int rightStart = std::distance(inputTriangles.begin(), mid);
 		
 		BVHNode *rightNode = new BVHNode();
 		r = rightNode;
 		if (rightCount <= MAXNODE_TRIANGLES) {
 			rightNode->isLeaf = true;
-			rightNode->offset = std::distance(inputTriangles.begin(), mid);
+			rightNode->offset = rightStart;
 			rightNode->num = rightCount;
+			for (int i=rightStart; i<(rightStart+rightCount); i++) {
+				rightNode->bounds.extend(inputTriangles[i].vertices[0].p);
+				rightNode->bounds.extend(inputTriangles[i].vertices[1].p);
+				rightNode->bounds.extend(inputTriangles[i].vertices[2].p);
+			}
 		} else {
-			rightNode->build(inputTriangles, std::distance(inputTriangles.begin(), mid), rightCount);
+			rightNode->build(inputTriangles, rightStart, rightCount);
 		}
 	}
 
 	void traverse(const Ray& ray, const std::vector<Triangle>& triangles, IntersectionData& intersection) {
 		float boundT;
-		if (!bounds.rayAABB(ray, boundT)) {
+		if (!bounds.rayAABB(ray, boundT) || boundT > intersection.t) {
 			return;
 		}
 
@@ -463,7 +474,7 @@ public:
 
 	bool traverseVisible(const Ray& ray, const std::vector<Triangle>& triangles, const float maxT) {
 		float boundT;
-		if (!bounds.rayAABB(ray, boundT)) {
+		if (!bounds.rayAABB(ray, boundT) || boundT > maxT) {
 			return true;
 		}
 
