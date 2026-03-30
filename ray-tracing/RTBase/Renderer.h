@@ -122,10 +122,8 @@ public:
 	void render()
 	{
 		film->incrementSPP();
-		for (unsigned int y = 0; y < film->height; y++)
-		{
-			for (unsigned int x = 0; x < film->width; x++)
-			{
+		for (unsigned int y = 0; y < film->height; y++) {
+			for (unsigned int x = 0; x < film->width; x++) {
 				float px = x + 0.5f;
 				float py = y + 0.5f;
 				Ray ray = scene->camera.generateRay(px, py);
@@ -133,10 +131,13 @@ public:
 				//Colour col = albedo(ray);
 				Colour col = direct(ray, &samplers[0]);
 				film->splat(px, py, col);
-				unsigned char r = (unsigned char)(col.r * 255);
-				unsigned char g = (unsigned char)(col.g * 255);
-				unsigned char b = (unsigned char)(col.b * 255);
-				film->tonemap(px, py, r, g, b);
+			}
+		}
+
+		for (unsigned int y = 0; y < film->height; y++) {
+			for (unsigned int x = 0; x < film->width; x++) {
+				unsigned char r, g, b;
+				film->tonemap(x, y, r, g, b);
 				canvas->draw(x, y, r, g, b);
 			}
 		}

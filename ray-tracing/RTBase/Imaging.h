@@ -228,16 +228,18 @@ public:
 	}
 
 	void filmicTonemap(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, float exposure = 1.0f) {
+		// Use average color per pixel (accumulated / SPP)
 		Colour curr = film[(y * width) + x];
+		if (SPP > 0) curr = curr / (float)SPP;
+		
 		float expFac = 1 / 2.2;
 		float W = 11.2;
 		float CW = filmicCFunc(W);
-		
 		float CR = filmicCFunc(curr.r);
-		float rOut =  powf((CR / CW), expFac);
+		float rOut = powf((CR / CW), expFac);
 
 		float CG = filmicCFunc(curr.g);
-		float gOut =  powf((CG / CW), expFac);
+		float gOut = powf((CG / CW), expFac);
 
 		float CB = filmicCFunc(curr.b);
 		float bOut = powf((CB / CW), expFac);
