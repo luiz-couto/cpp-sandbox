@@ -11,16 +11,18 @@
 #include <thread>
 #include <functional>
 
+#define MAX_DEPTH_PATH_TRACE 10
+
 class RayTracer
 {
 public:
-	Scene* scene;
-	GamesEngineeringBase::Window* canvas;
-	Film* film;
+	Scene *scene;
+	GamesEngineeringBase::Window *canvas;
+	Film *film;
 	MTRandom *samplers;
 	std::thread **threads;
 	int numProcs;
-	void init(Scene* _scene, GamesEngineeringBase::Window* _canvas)
+	void init(Scene *_scene, GamesEngineeringBase::Window *_canvas)
 	{
 		scene = _scene;
 		canvas = _canvas;
@@ -29,7 +31,7 @@ public:
 		SYSTEM_INFO sysInfo;
 		GetSystemInfo(&sysInfo);
 		numProcs = sysInfo.dwNumberOfProcessors;
-		threads = new std::thread*[numProcs];
+		threads = new std::thread *[numProcs];
 		samplers = new MTRandom[numProcs];
 		clear();
 	}
@@ -37,17 +39,19 @@ public:
 	{
 		film->clear();
 	}
-	Colour computeDirect(ShadingData shadingData, Sampler* sampler)
+	Colour computeDirect(ShadingData shadingData, Sampler *sampler)
 	{
 		// Is surface is specular we cannot computing direct lighting
-		if (shadingData.bsdf->isPureSpecular() == true) {
+		if (shadingData.bsdf->isPureSpecular() == true)
+		{
 			return Colour(0.0f, 0.0f, 0.0f);
 		}
-		
+
 		float pmf;
 		Light *sampledLight = scene->sampleLight(sampler, pmf);
 
-		if (sampledLight->isArea()) {
+		if (sampledLight->isArea())
+		{
 			Colour emittedColour;
 			float pdf;
 			Vec3 sampledPoint = sampledLight->sample(shadingData, sampler, emittedColour, pdf);
@@ -70,16 +74,58 @@ public:
 			return finalColor / pdf;
 		}
 
+		return Colour(0.0f, 0.0f, 0.0f);
+	}
 
-		// Compute direct lighting here
-		return Colour(0.0f, 0.0f, 0.0f);
-	}
-	Colour pathTrace(Ray& r, Colour& pathThroughput, int depth, Sampler* sampler)
+	Colour pathTrace(Ray &r, Colour &pathThroughput, int depth, Sampler *sampler, bool isSpecularBounce = false)
 	{
-		// Add pathtracer code here
-		return Colour(0.0f, 0.0f, 0.0f);
+		if (depth > MAX_DEPTH_PATH_TRACE) {
+			return Colour(0.0f, 0.0f, 0.0f);
+		}
+
+		IntersectionData intersection = scene->traverse(r);
+		ShadingData shadingData = scene->calculateShadingData(intersection, r);
+		if (shadingData.t < FLT_MAX) {
+			if (shadingData.bsdf->isLight()) {
+				if (isSpecularBounce || depth == 0) {
+                	return shadingData.bsdf->emit(shadingData, shadingData.wo);
+				}
+            	else {
+                	return Colour(0,0,0);
+				}
+			}
+
+			Colour directLight = computeDirect(shadingData, sampler);
+	
+			Vec3 sampledDirection = SamplingDistributions::uniformSampleHemisphere(sampler->next(), sampler->next());
+			Vec3 worldDirection = shadingData.frame.toWorld(sampledDirection);
+			float pdf = SamplingDistributions::uniformHemispherePDF(sampledDirection);
+			Colour bsdfValue = shadingData.bsdf->evaluate(shadingData, worldDirection);
+	
+			Colour newThroughput = pathThroughput * bsdfValue * fabsf(sampledDirection.z) / pdf;
+			
+			if (depth >= 3) {
+				float q = newThroughput.Lum();
+				float qClamped = std::min(q, 1.0f);
+				float epsilon = sampler->next();
+				if (epsilon > qClamped) {
+					return directLight;
+				}
+				
+				newThroughput = newThroughput / qClamped;
+			}
+		
+			Ray newRay;
+			newRay.init(shadingData.x + (worldDirection * EPSILON), worldDirection);
+			Colour indirectLight = pathTrace(newRay, newThroughput, depth + 1, sampler, shadingData.bsdf->isPureSpecular());
+	
+			return indirectLight + directLight;
+		}
+
+		return scene->background->evaluate(r.dir);
 	}
-	Colour direct(Ray& r, Sampler* sampler)
+
+	Colour direct(Ray &r, Sampler *sampler)
 	{
 
 		IntersectionData intersection = scene->traverse(r);
@@ -90,12 +136,12 @@ public:
 			{
 				return shadingData.bsdf->emit(shadingData, shadingData.wo);
 			}
-	
+
 			return computeDirect(shadingData, sampler);
 		}
 		return scene->background->evaluate(r.dir);
 	}
-	Colour albedo(Ray& r)
+	Colour albedo(Ray &r)
 	{
 		IntersectionData intersection = scene->traverse(r);
 		ShadingData shadingData = scene->calculateShadingData(intersection, r);
@@ -109,7 +155,7 @@ public:
 		}
 		return scene->background->evaluate(r.dir);
 	}
-	Colour viewNormals(Ray& r)
+	Colour viewNormals(Ray &r)
 	{
 		IntersectionData intersection = scene->traverse(r);
 		if (intersection.t < FLT_MAX)
@@ -122,20 +168,32 @@ public:
 	void render()
 	{
 		film->incrementSPP();
-		for (unsigned int y = 0; y < film->height; y++) {
-			for (unsigned int x = 0; x < film->width; x++) {
-				float px = x + 0.5f;
-				float py = y + 0.5f;
+		for (unsigned int y = 0; y < film->height; y++)
+		{
+			for (unsigned int x = 0; x < film->width; x++)
+			{
+				// float px = x + 0.5f;
+				// float py = y + 0.5f;
+
+				float px = x + samplers->next();
+				float py = y + samplers->next();
 				Ray ray = scene->camera.generateRay(px, py);
-				//Colour col = viewNormals(ray);
-				//Colour col = albedo(ray);
-				Colour col = direct(ray, &samplers[0]);
+				// Colour col = viewNormals(ray);
+				// Colour col = albedo(ray);
+
+				Colour pathThroughput(1.0f, 1.0f, 1.0f);
+
+				Colour col = pathTrace(ray, pathThroughput, 0, &samplers[0]);
+
+				// Colour col = direct(ray, &samplers[0]);
 				film->splat(px, py, col);
 			}
 		}
 
-		for (unsigned int y = 0; y < film->height; y++) {
-			for (unsigned int x = 0; x < film->width; x++) {
+		for (unsigned int y = 0; y < film->height; y++)
+		{
+			for (unsigned int x = 0; x < film->width; x++)
+			{
 				unsigned char r, g, b;
 				film->tonemap(x, y, r, g, b);
 				canvas->draw(x, y, r, g, b);
