@@ -12,6 +12,7 @@
 #include <functional>
 
 #define MAX_DEPTH_PATH_TRACE 10
+#define MIN_DEPTH_FOR_RUSSIAN_ROULETTE 3
 
 class RayTracer
 {
@@ -104,7 +105,7 @@ public:
 	
 			Colour newThroughput = pathThroughput * bsdfValue * fabsf(sampledDirection.z) / pdf;
 			
-			if (depth >= 3) {
+			if (depth >= MIN_DEPTH_FOR_RUSSIAN_ROULETTE) {
 				float q = newThroughput.Lum();
 				float qClamped = std::min(q, 1.0f);
 				float epsilon = sampler->next();
